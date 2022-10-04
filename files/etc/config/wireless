@@ -1,0 +1,32 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option path 'platform/soc/18000000.wmac'
+	option band '2g'
+	option htmode 'HE40'
+	option channel 'auto'
+	option cell_density '0'
+
+config wifi-iface 'default_radio0'
+	option device 'radio0'
+	option network 'lan'
+	option mode 'ap'
+	option ssid 'OpenWrt'
+	option encryption 'none'
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option path 'platform/soc/18000000.wmac+1'
+	option band '5g'
+	option cell_density '0'
+	option channel '64'
+	option htmode 'HE160'
+	option country 'US'
+
+config wifi-iface 'default_radio1'
+	option device 'radio1'
+	option network 'lan'
+	option mode 'ap'
+	option encryption 'none'
+	option ssid 'OpenWrt5G'
+
