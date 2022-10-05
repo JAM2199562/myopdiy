@@ -53,6 +53,6 @@ git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
 ./scripts/feeds install -f -p jerryk luci-app-vssr
 
 # 安装luci-theme-argon
-./scripts/feeds uninstall luci-theme-argon luci-theme-argon-18.06 luci-theme-argon-lr luci-theme-argonne
+./scripts/feeds uninstall luci-theme-argon luci-theme-argon-18.06 luci-theme-argon-lr luci-theme-argonne luci-app-argonne-config
 git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
 git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
