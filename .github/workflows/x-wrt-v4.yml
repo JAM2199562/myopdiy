@@ -43,6 +43,11 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+    - name: Set Beijing Timezone
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: Asia/Shanghai
+
     - name: 检查项目分支
       uses: actions/checkout@main
 
