@@ -30,7 +30,7 @@ git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
 
 #安装所有包
 ./scripts/feeds install -a -f -p liuran001_packages
-#./scripts/feeds install -a
+./scripts/feeds install -a
 
 #安装mosdns
 ./scripts/feeds uninstall luci-app-mosdns mosdns
@@ -51,3 +51,8 @@ git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
 # 安装HelloWorld
 ./scripts/feeds uninstall luci-app-vssr
 ./scripts/feeds install -f -p jerryk luci-app-vssr
+
+# 安装luci-theme-argon
+./scripts/feeds uninstall luci-theme-argon luci-theme-argon-18.06 luci-theme-argon-lr luci-theme-argonne
+git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
+git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon

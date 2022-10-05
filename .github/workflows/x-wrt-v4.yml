@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 10 * * *
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_URL: https://github.com/x-wrt/x-wrt
