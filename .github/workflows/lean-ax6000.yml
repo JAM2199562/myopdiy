@@ -1,0 +1,252 @@
+#=================================================
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+#=================================================
+
+name: lede-ax6000-每日构建
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: 0 4 * * *
+  push:
+    branches: [ main ]
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE_4: ax6000-v4.config
+  CONFIG_FILE_6: ax6000-v6.config
+  DIY_P1_SH: diy-ax6000-part1.sh
+  DIY_P2_SH: diy-ax6000-part2.sh
+  SSH_ACTIONS: false
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+  UBI_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-initramfs-factory
+  BIN_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade
+  TOOLCHAIN_NAME: openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+  TOOLCHAIN_PATH: /workdir/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64/toolchain-aarch64_cortex-a53_gcc-11.3.0_musl/
+  USER_TOOLCHAIN: false
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Set Beijing Timezone
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: "Asia/Shanghai"
+
+    - name: 检出项目分支
+      uses: actions/checkout@main
+      with:
+        ref: lede-ax6000
+
+    - name: 安装编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004)
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: 下载固件源码并自定义dts
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        wget -O openwrt/target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dts https://tinyurl.com/x-wrt-ax6000-dts
+
+    - name: 自定义软件源
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+
+    - name: 更改固件设置
+      run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE_4 ] && mv $CONFIG_FILE_4 openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: 下载安装包
+      id: package
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 解压和配置toolchain
+      run: |
+        wget -O /workdir/$TOOLCHAIN_NAME https://raw.githubusercontent.com/JAM2199562/myopdiy/bcd09af1dffd7ef2064989c78ff0f1e69ff3fb1d/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+        tar -xf /workdir/$TOOLCHAIN_NAME -C /workdir
+        cd openwrt
+        ./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config aarch64_cortex-a53 || true
+      if: env.USER_TOOLCHAIN== true
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    - name: 开始编译v4固件
+      id: compile_4
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "::set-output name=status::success"
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_TIME=$(date "+%Y年%m月%d日-%H点")" >> $GITHUB_ENV
+
+    - name: 查看磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
+
+    - name: 上传bin压缩目录
+      uses: actions/upload-artifact@main
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin/packages/aarch64_cortex-a53
+
+    - name: 整理编译好的v4固件
+      id: organize_4
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages && mkdir packages
+        find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
+        find -name "*kernel.bin*" | xargs -i mv -f {} packages
+        find -name "*rootfs*" | xargs -i mv -f {} packages
+        find -name "*.manifest*" | xargs -i mv -f {} packages
+        find -name "*vmlinuz*" | xargs -i mv -f {} packages
+        find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
+        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV4.ubi
+        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4.bin
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: 上传v4固件到github action
+      uses: actions/upload-artifact@main
+      if: steps.organize_4.outputs.status == 'success' && !cancelled()
+      with:
+        name: lede-IPv4${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: 更新v6配置
+      run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_6 openwrt/.config
+        make defconfig
+
+    - name: 开始编译v6固件
+      id: compile_6
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "::set-output name=status::success"
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
+
+    - name: 整理编译好的v6固件
+      id: organize_6
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages && mkdir packages
+        find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
+        find -name "*kernel.bin*" | xargs -i mv -f {} packages
+        find -name "*rootfs*" | xargs -i mv -f {} packages
+        find -name "*.manifest*" | xargs -i mv -f {} packages
+        find -name "*vmlinuz*" | xargs -i mv -f {} packages
+        find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
+        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV6.ubi
+        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6.bin
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: 上传v6固件到github action
+      uses: actions/upload-artifact@main
+      if: steps.organize_6.outputs.status == 'success' && !cancelled()
+      with:
+        name: lede-IPv6${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE}}
+
+    - name: 创建release标签
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        touch release.txt
+        echo "精简固件，只安装了很少的软件。" >> release.txt
+        echo "[固件源码](https://github.com/lede/lede)" >> release.txt
+        echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "**软件清单**" >> release.txt
+        echo "luci-app-helloword😁😁😁" >> release.txt
+        echo "luci-app-mosdns" >> release.txt
+        echo "luci-app-wireguard" >> release.txt
+        echo "luci-app-vlmcsd" >> release.txt
+        echo "luci-app-autoreboot" >> release.txt
+        echo "::set-output name=status::success"
+    - name: 发布至release
+      uses: softprops/action-gh-release@v1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        name: 「 每日构建 」${{ env.FILE_TIME }} 「 lede-AX6000精简版 」
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
+
+    - name: 删除旧的Releases
+      uses: dev-drprasad/delete-older-releases@v0.1.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 20
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
