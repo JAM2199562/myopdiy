@@ -125,6 +125,13 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin/packages/aarch64_cortex-a53
 
+    - name: 查看目录
+      id: ls_4
+      run: |
+        cd openwrt/bin/targets/*/*
+        ls -al
+
+
     - name: 整理编译好的v4固件
       id: organize_4
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
@@ -137,8 +144,8 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV4.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4.bin
+        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV4-$FILE_TIME.ubi
+        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4-$FILE_TIME.bin
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
@@ -153,7 +160,7 @@ jobs:
     - name: 更新v6配置
       run: |
         [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_4 openwrt/.config
+        [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_6 openwrt/.config
         make defconfig
 
     - name: 开始编译v6固件
@@ -163,6 +170,12 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "::set-output name=status::success"
+
+    - name: 查看目录
+      id: ls_4
+      run: |
+        cd openwrt/bin/targets/*/*
+        ls -al
 
     - name: 整理编译好的v6固件
       id: organize_6
@@ -176,8 +189,8 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV6.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6.bin
+        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV6-$FILE_TIME.ubi
+        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6-$FILE_TIME.bin
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
