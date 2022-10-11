@@ -22,16 +22,16 @@ sed -i '$a src-git small8 https://github.com/kenzok8/small-package' feeds.conf.d
 # 更新包
 ./scripts/feeds update -a
 
-# 强制安装liuran001的所有包
-./scripts/feeds install -a -f -p liuran001_packages
+# # 强制安装liuran001的所有包
+# ./scripts/feeds install -a -f -p liuran001_packages
 
-## 优选包：small8的mosdns和v2ray-geodata有问题,liuran001的adg编译有问题
+# ## 优选包：small8的mosdns和v2ray-geodata有问题,liuran001的adg编译有问题
 
-# 安装luci-app-vlmcsd
-git clone https://github.com/cokebar/luci-app-vlmcsd.git package/luci-app-vlmcsd
-git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
+# # 安装luci-app-vlmcsd
+# git clone https://github.com/cokebar/luci-app-vlmcsd.git package/luci-app-vlmcsd
+# git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
 
-# 安装mosdns
+#安装mosdns
 ./scripts/feeds uninstall luci-app-mosdns mosdns
 ./scripts/feeds install -f -p liuran001_packages mosdns luci-app-mosdns
 
@@ -51,15 +51,15 @@ git clone https://github.com/cokebar/openwrt-vlmcsd.git package/openwrt-vlmcsd
 ./scripts/feeds uninstall luci-app-vssr
 ./scripts/feeds install -f -p jerryk luci-app-vssr
 
-# 安装luci-theme-argon
-./scripts/feeds uninstall luci-theme-argon luci-theme-argon-18.06 luci-theme-argon-lr luci-theme-argonne luci-app-argonne-config
-find ./ -name luci-theme-argon* | xargs rm -rf
-git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
-git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
+# # 安装luci-theme-argon
+# ./scripts/feeds uninstall luci-theme-argon luci-theme-argon-18.06 luci-theme-argon-lr luci-theme-argonne luci-app-argonne-config
+# find ./ -name luci-theme-argon* | xargs rm -rf
+# git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
+# git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
 
-# 安装v2ray-geodata
-find ./ -name v2ray-geodata | xargs rm -rf
-git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
+# # 安装v2ray-geodata
+# find ./ -name v2ray-geodata | xargs rm -rf
+# git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
 
 # 更新缓存并安装遗漏包
 ./scripts/feeds update -i && ./scripts/feeds install -a

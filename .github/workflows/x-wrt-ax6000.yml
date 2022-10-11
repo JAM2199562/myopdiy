@@ -22,7 +22,7 @@ on:
     branches: [ main ]
 
 env:
-  REPO_URL: https://github.com/x-wrt/x-wrt
+  REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE_4: x-wrt-v4.config
@@ -48,6 +48,7 @@ jobs:
       uses: szenius/set-timezone@v1.0
       with:
         timezoneLinux: Asia/Shanghai
+
 
     - name: 检出项目分支
       uses: actions/checkout@main
