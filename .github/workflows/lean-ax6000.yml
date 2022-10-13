@@ -108,7 +108,19 @@ jobs:
         tar -xf /workdir/$TOOLCHAIN_NAME -C /workdir
         cd openwrt
         ./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config aarch64_cortex-a53 || true
-      if: env.USER_TOOLCHAIN== true
+      if: env.USER_TOOLCHAIN == 'true'
+
+    - name: 开始编译v4固件
+      id: compile_4
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "::set-output name=status::success"
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
@@ -160,10 +172,10 @@ jobs:
         mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4.bin
         rm -rf packages
         mkdir -p IPV4
-        (for var in *.bin; do mv "$var" "IPV4/${var%.bin}-IPV4.bin"; done) || true
-        (for var in *.ubi; do mv "$var" "IPV4/${var%.ubi}-IPV4.ubi"; done) || true
-        (for var in *.json; do mv "$var" "IPV4/${var%.json}-IPV4.json"; done) || true
-        (for var in *.buildinfo; do mv "$var" "IPV4/${var%.buildinfo}-IPV4.buildinfo"; done) || true
+        (for var in *.bin; do mv "$var" "IPV4/$FILE_TIME-${var%.bin}-IPV4.bin"; done) || true
+        (for var in *.ubi; do mv "$var" "IPV4/$FILE_TIME-${var%.ubi}-IPV4.ubi"; done) || true
+        (for var in *.json; do mv "$var" "IPV4/$FILE_TIME-${var%.json}-IPV4.json"; done) || true
+        (for var in *.buildinfo; do mv "$var" "IPV4/$FILE_TIME-${var%.buildinfo}-IPV4.buildinfo"; done) || true
 
         echo "FIRMWARE_4=$PWD/IPV4" >> $GITHUB_ENV
         echo "::set-output name=status::success"
@@ -179,6 +191,7 @@ jobs:
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_6 openwrt/.config
+        cd openwrt
         make defconfig
 
     - name: 开始编译v6固件
@@ -209,10 +222,10 @@ jobs:
         mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6.bin
         rm -rf packages
         mkdir -p IPV6
-        (for var in *.bin; do mv "$var" "IPV6/${var%.bin}-IPV6.bin"; done) ||true
-        (for var in *.ubi; do mv "$var" "IPV6/${var%.ubi}-IPV6.ubi"; done) ||true
-        (for var in *.json; do mv "$var" "IPV6/${var%.json}-IPV6.json"; done) ||true
-        (for var in *.buildinfo; do mv "$var" "IPV6/${var%.buildinfo}-IPV6.buildinfo"; done) ||true
+        (for var in *.bin; do mv "$var" "IPV6/$FILE_TIME-${var%.bin}-IPV6.bin"; done) ||true
+        (for var in *.ubi; do mv "$var" "IPV6/$FILE_TIME-${var%.ubi}-IPV6.ubi"; done) ||true
+        (for var in *.json; do mv "$var" "IPV6/$FILE_TIME-${var%.json}-IPV6.json"; done) ||true
+        (for var in *.buildinfo; do mv "$var" "IPV6/$FILE_TIME-${var%.buildinfo}-IPV6.buildinfo"; done) ||true
         echo "FIRMWARE_6=$PWD/IPV6" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
@@ -245,7 +258,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
-        name: 「 每日构建 」-「${{env.FILE_DATE}}」-「 lede-AX6000精简版 」
+        name: 「${{env.FILE_DATE}}」-「 每日构建 」-「 lede-AX6000 」
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: |
