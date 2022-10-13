@@ -8,20 +8,26 @@ ImmortalWrt固件源码地址：[https://github.com/immortalwrt/immortalwrt](htt
 
 x-wrt固件源码地址：[https://github.com/x-wrt/x-wrt](https://github.com/x-wrt/x-wrt)
 
+lede固件源码地址：[https://github.com/coolsnowwolf/lede)
+
 由衷感谢所有为openwrt无私奉献的大佬们。
 
 ## 固件说明：
+主要编译两种设备的固件：X86版和红米AX6000
 
-X86版采用ImmortalWrt源码版本，极度精简，共包含两种版本
+### X86版采用ImmortalWrt源码版本，极度精简，共包含两种版本
 
-* 彻底禁用IPv4版
-* 默认启用IPv6版
+* 只启用IPv4
+* 同时启用IPv4和IPv6
 
-红米AX6000采用x-wrt源码版本，比较精简，软件包酌情更新，包含IPV4和IPV6两个版本
+两种版本软件包相同，这个主要自用来配合RouterOS做策略路由，使用到的功能主要有mosdns和helloworld
 
-* 彻底禁用IPv4版
-* 默认启用IPv6版
+### 红米AX6000采用coolsnowwolf和x-wrt生成两种版本，每个版本包含
 
+* 只启用IPv4
+* 同时启用IPv4和IPv6
+
+两种版本软件包相同，由于是硬路由，所以软件包会多一些，后面还有打算集成ddnsgo相关的东西
 
 
 ### **X86版登录信息**
@@ -34,7 +40,7 @@ X86版采用ImmortalWrt源码版本，极度精简，共包含两种版本
 
 
 
-### **AX6000登录信息**
+### **x-wrt版AX6000登录信息(暂时)**
 
 | 配置项 |      值      |
 | :----: | :----------: |
@@ -44,6 +50,15 @@ X86版采用ImmortalWrt源码版本，极度精简，共包含两种版本
 |  2.4G  |   Openwrt    |
 |   5G   |  Openwrt5G   |
 
+### **coolsnowwolf版AX6000登录信息(规划中)**
+
+| 配置项 |      值      |
+| :----: | :----------: |
+|   IP   | 192.168.1.1 |
+| 用户名 |    admin     |
+|  密码  |      空      |
+|  2.4G  |   Openwrt    |
+|   5G   |  Openwrt5G   |
 
 
 ## 软件清单
