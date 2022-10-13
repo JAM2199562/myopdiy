@@ -243,12 +243,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
-        name: 「 每日构建 」${{ env.FILE_TIME }} 「 lede-AX6000精简版 」
+        name: 「 每日构建 」-「${{env.FILE_DATE}}」-「 lede-AX6000精简版 」
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: |
-          ${{ env.FIRMWARE_4 }}
-          ${{ env.FIRMWARE_6 }}
+          ${{ env.FIRMWARE_4 }}/*
+          ${{ env.FIRMWARE_6 }}/*
 
     - name: 查看目录
       if: |
