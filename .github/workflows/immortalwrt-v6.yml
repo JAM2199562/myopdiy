@@ -39,6 +39,9 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+    - name: 设定时区
+      uses: zcong1993/setup-timezone@master
+
     - name: 检查项目分支
       uses: actions/checkout@main
 

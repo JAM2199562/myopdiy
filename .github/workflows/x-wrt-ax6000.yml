@@ -44,8 +44,8 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - name: Set Beijing Timezone
-      uses: szenius/set-timezone@v1.0
+    - name: 设定时区
+      uses: zcong1993/setup-timezone@master
       with:
         timezoneLinux: Asia/Shanghai
 
