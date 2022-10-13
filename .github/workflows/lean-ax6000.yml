@@ -38,9 +38,10 @@ env:
   TZ: Asia/Shanghai
   UBI_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-initramfs-factory
   BIN_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade
-  TOOLCHAIN_NAME: openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+  TOOLCHAIN_NAME: coolsnowwolf-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.bz2
   TOOLCHAIN_PATH: /workdir/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64/toolchain-aarch64_cortex-a53_gcc-11.3.0_musl/
-  USER_TOOLCHAIN: false
+  TOOLCHAIN_DOWNLOAD_URL: https://raw.githubusercontent.com/JAM2199562/myopdiy/bcd09af1dffd7ef2064989c78ff0f1e69ff3fb1d/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+  USER_TOOLCHAIN: true
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -100,14 +101,28 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+      if: true
 
     - name: 解压和配置toolchain
       run: |
-        wget -O /workdir/$TOOLCHAIN_NAME https://raw.githubusercontent.com/JAM2199562/myopdiy/bcd09af1dffd7ef2064989c78ff0f1e69ff3fb1d/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+        wget -O /workdir/$TOOLCHAIN_NAME $TOOLCHAIN_DOWNLOAD_URL
         tar -xf /workdir/$TOOLCHAIN_NAME -C /workdir
         cd openwrt
+        wget -O scripts/ext-toolchain.sh https://raw.githubusercontent.com/openwrt/openwrt/master/scripts/ext-toolchain.sh
         ./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config aarch64_cortex-a53 || true
-      if: env.USER_TOOLCHAIN== true
+      if: env.USER_TOOLCHAIN == 'true'
+
+    - name: 开始编译v4固件
+      id: compile_4
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) V=s || make -j1 || make -j1 V=s
+        echo "::set-output name=status::success"
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_TIME=$(date "+%Y年%m月%d日-%H点")" >> $GITHUB_ENV
 
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
@@ -115,18 +130,6 @@ jobs:
       env:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-
-    - name: 开始编译v4固件
-      id: compile_4
-      run: |
-        cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 || make -j1 V=s
-        echo "::set-output name=status::success"
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_TIME=$(date "+%Y年%m月%d日-%H点")" >> $GITHUB_ENV
 
     - name: 查看磁盘使用情况
       if: (!cancelled())
@@ -155,10 +158,13 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV4.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4.bin
         rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        mkdir -p IPV4
+        for var in *.bin; do mv "$var" "IPV4/${var%.bin}-IPV4.bin"; done
+        for var in *.ubi; do mv "$var" "IPV4/${var%.ubi}-IPV4.ubi"; done
+        for var in *.json; do mv "$var" "IPV4/${var%.json}-IPV4.json"; done
+        for var in *.buildinfo; do mv "$var" "IPV4/${var%.buildinfo}-IPV4.buildinfo"; done
+        echo "FIRMWARE_4=$PWD/IPV4" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
     - name: 上传v4固件到github action
@@ -198,10 +204,13 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV6.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6.bin
         rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        mkdir -p IPV6
+        for var in *.bin; do mv "$var" "IPV6/${var%.bin}-IPV4.bin"; done
+        for var in *.ubi; do mv "$var" "IPV6/${var%.ubi}-IPV4.ubi"; done
+        for var in *.json; do mv "$var" "IPV6/${var%.json}-IPV4.json"; done
+        for var in *.buildinfo; do mv "$var" "IPV6/${var%.buildinfo}-IPV4.buildinfo"; done
+        echo "FIRMWARE_6=$PWD/IPV6" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
     - name: 上传v6固件到github action
