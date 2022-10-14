@@ -25,10 +25,10 @@ env:
   REPO_URL: https://github.com/x-wrt/x-wrt
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE_4: x-wrt-v4.config
-  CONFIG_FILE_6: x-wrt-v6.config
-  DIY_P1_SH: diy-xwrt-v4-part1.sh
-  DIY_P2_SH: diy-xwrt-v4-part2.sh
+  CONFIG_FILE_4: x-wrt/ax6000/x-wrt-ax6000-v4.config
+  CONFIG_FILE_6: x-wrt/ax6000/x-wrt-ax6000-v6.config
+  DIY_P1_SH: x-wrt/ax6000/diy-xwrt-ax6000-v4-part1.sh
+  DIY_P2_SH: x-wrt/ax6000/diy-xwrt-ax6000-v4-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
