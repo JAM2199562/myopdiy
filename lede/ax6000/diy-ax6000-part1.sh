@@ -14,7 +14,7 @@ sed '2 auci comit' -i package/lean/default-settings/files/zzz-default-settings
 # Add a feed source
 sed -i '$a src-git liuran001_packages https://github.com/liuran001/openwrt-packages' feeds.conf.default
 sed -i '$a src-git small8 https://github.com/kenzok8/small-package' feeds.conf.default
-
+sed -i '$a src-git luci_app_ddns_go https://github.com/sirpdboy/luci-app-ddns-go' feeds.conf.default
 
 ./scripts/feeds update -a && ./scripts/feeds install -a
 

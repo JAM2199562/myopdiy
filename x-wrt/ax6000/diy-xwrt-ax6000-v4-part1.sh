@@ -18,6 +18,7 @@ sed -i '$a src-git jerryk https://github.com/jerrykuku/openwrt-package' feeds.co
 sed -i '$a src-git liuran001_packages https://github.com/liuran001/openwrt-packages' feeds.conf.default
 sed -i '$a src-git-full opackages https://git.openwrt.org/feed/packages.git' feeds.conf.default
 sed -i '$a src-git small8 https://github.com/kenzok8/small-package' feeds.conf.default
+sed -i '$a src-git luci_app_ddns_go https://github.com/sirpdboy/luci-app-ddns-go' feeds.conf.default
 
 # 更新包
 ./scripts/feeds update -a
