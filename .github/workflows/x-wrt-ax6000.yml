@@ -36,8 +36,10 @@ env:
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  UBI_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-initramfs-factory
-  BIN_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade
+  TOOLCHAIN_NAME: x-wrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.bz2
+  TOOLCHAIN_PATH: /workdir/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64/toolchain-aarch64_cortex-a53_gcc-11.3.0_musl/
+  TOOLCHAIN_DOWNLOAD_URL: https://tinyurl.com/x-wrt-mtk-toolchain
+  USER_TOOLCHAIN: false
 
 jobs:
   build:
@@ -47,10 +49,11 @@ jobs:
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
-        timezoneLinux: Asia/Shanghai
+        timezoneLinux: "Asia/Shanghai"
 
     - name: 检出项目分支
       uses: actions/checkout@main
+
 
     - name: 安装编译环境
       env:
@@ -58,9 +61,8 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        ###sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004)
-        sudo -E apt-get -qq install git
-        #sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004)
+        sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
@@ -88,13 +90,6 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: SSH链接管理
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-
     - name: 下载安装包
       id: package
       run: |
@@ -103,6 +98,16 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+      if: true
+
+    - name: 解压和配置toolchain
+      run: |
+        wget -O /workdir/$TOOLCHAIN_NAME $TOOLCHAIN_DOWNLOAD_URL
+        tar -xf /workdir/$TOOLCHAIN_NAME -C /workdir
+        cd openwrt
+        ./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config aarch64_cortex-a53 || true
+      if: env.USER_TOOLCHAIN == 'true'
+
     - name: 开始编译v4固件
       id: compile_4
       run: |
@@ -112,12 +117,23 @@ jobs:
         echo "::set-output name=status::success"
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_TIME=$(date "+%Y年%m月%d日-%H点")" >> $GITHUB_ENV
+        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     - name: 查看磁盘使用情况
       if: (!cancelled())
       run: df -hT
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
 
     - name: 上传bin压缩目录
       uses: actions/upload-artifact@main
@@ -138,23 +154,28 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV4.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV4.bin
         rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        mkdir -p IPV4
+        (for var in *.bin; do mv "$var" "IPV4/$FILE_TIME-${var%.bin}-IPV4.bin"; done) || true
+        (for var in *.ubi; do mv "$var" "IPV4/$FILE_TIME-${var%.ubi}-IPV4.ubi"; done) || true
+        (for var in *.json; do mv "$var" "IPV4/$FILE_TIME-${var%.json}-IPV4.json"; done) || true
+        (for var in *.buildinfo; do mv "$var" "IPV4/$FILE_TIME-${var%.buildinfo}-IPV4.buildinfo"; done) || true
+
+        echo "FIRMWARE_4=$PWD/IPV4" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
     - name: 上传v4固件到github action
       uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+      if: steps.organize_4.outputs.status == 'success' && !cancelled()
       with:
-        name: x-wrt-IPv4${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
+        name: lede-IPv4${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE_4 }}
 
     - name: 更新v6配置
       run: |
         [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_4 openwrt/.config
+        [ -e $CONFIG_FILE_6 ] && mv $CONFIG_FILE_6 openwrt/.config
+        cd openwrt
         make defconfig
 
     - name: 开始编译v6固件
@@ -164,6 +185,10 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "::set-output name=status::success"
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
 
     - name: 整理编译好的v6固件
       id: organize_6
@@ -177,18 +202,21 @@ jobs:
         find -name "*.manifest*" | xargs -i mv -f {} packages
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        mv $UBI_FILE_SUFFIX.ubi $UBI_FILE_SUFFIX-IPV6.ubi
-        mv $BIN_FILE_SUFFIX.bin $BIN_FILE_SUFFIX-IPV6.bin
         rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        mkdir -p IPV6
+        (for var in *.bin; do mv "$var" "IPV6/$FILE_TIME-${var%.bin}-IPV6.bin"; done) ||true
+        (for var in *.ubi; do mv "$var" "IPV6/$FILE_TIME-${var%.ubi}-IPV6.ubi"; done) ||true
+        (for var in *.json; do mv "$var" "IPV6/$FILE_TIME-${var%.json}-IPV6.json"; done) ||true
+        (for var in *.buildinfo; do mv "$var" "IPV6/$FILE_TIME-${var%.buildinfo}-IPV6.buildinfo"; done) ||true
+        echo "FIRMWARE_6=$PWD/IPV6" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
     - name: 上传v6固件到github action
       uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+      if: steps.organize_6.outputs.status == 'success' && !cancelled()
       with:
-        name: x-wrt-IPv6${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE}}
+        name: lede-IPv6${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE_6}}
 
     - name: 创建release标签
       id: tag
@@ -197,7 +225,7 @@ jobs:
         echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         echo "精简固件，只安装了很少的软件。" >> release.txt
-        echo "[固件源码](https://github.com/x-wrt/x-wrt)" >> release.txt
+        echo "[固件源码](https://github.com/lede/lede)" >> release.txt
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
         echo "**软件清单**" >> release.txt
         echo "luci-app-helloword😁😁😁" >> release.txt
@@ -212,10 +240,16 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
-        name: 「 每日构建 」${{ env.FILE_TIME }} 「 x-wrt-AX6000精简版 」
+        name: 「${{env.FILE_DATE}}」-「 每日构建 」-「 lede-AX6000 」
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
-        files: ${{ env.FIRMWARE }}/*
+        files: |
+          ${{ env.FIRMWARE_4 }}/*
+          ${{ env.FIRMWARE_6 }}/*
+
+    - name: 查看目录
+      if: |
+      run: ls -al openwrt/bin/targets/*/* || true
 
     - name: 删除旧的Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0

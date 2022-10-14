@@ -36,11 +36,9 @@ env:
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  UBI_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-initramfs-factory
-  BIN_FILE_SUFFIX: openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade
   TOOLCHAIN_NAME: coolsnowwolf-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.bz2
   TOOLCHAIN_PATH: /workdir/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64/toolchain-aarch64_cortex-a53_gcc-11.3.0_musl/
-  TOOLCHAIN_DOWNLOAD_URL: https://raw.githubusercontent.com/JAM2199562/myopdiy/bcd09af1dffd7ef2064989c78ff0f1e69ff3fb1d/openwrt-toolchain-mediatek-filogic_gcc-11.3.0_musl.Linux-x86_64.tar.xz
+  TOOLCHAIN_DOWNLOAD_URL: https://tinyurl.com/coolsnowwolf-mtk-toolchain
   USER_TOOLCHAIN: false
 jobs:
   build:
