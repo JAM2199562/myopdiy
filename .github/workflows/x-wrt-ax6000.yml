@@ -168,7 +168,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize_4.outputs.status == 'success' && !cancelled()
       with:
-        name: lede-IPv4${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: x-wrt-IPv4${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE_4 }}
 
     - name: 更新v6配置
@@ -215,7 +215,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize_6.outputs.status == 'success' && !cancelled()
       with:
-        name: lede-IPv6${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: x-wrt-IPv6${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE_6}}
 
     - name: 创建release标签
@@ -225,7 +225,7 @@ jobs:
         echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         echo "精简固件，只安装了很少的软件。" >> release.txt
-        echo "[固件源码](https://github.com/lede/lede)" >> release.txt
+        echo "[固件源码](https://github.com/x-wrt/x-wrt)" >> release.txt
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
         echo "**软件清单**" >> release.txt
         echo "luci-app-helloword😁😁😁" >> release.txt
@@ -240,7 +240,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
-        name: 「${{env.FILE_DATE}}」-「 每日构建 」-「 lede-AX6000 」
+        name: 「${{env.FILE_DATE}}」-「 每日构建 」-「 x-wrt-AX6000 」
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: |
