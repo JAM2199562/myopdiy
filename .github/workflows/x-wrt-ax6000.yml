@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: x-wrt-AX6000-每日构建
+name: x-wrt-ax6000-每日构建
 
 on:
   repository_dispatch:
