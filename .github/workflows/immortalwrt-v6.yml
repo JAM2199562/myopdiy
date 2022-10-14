@@ -24,8 +24,8 @@ env:
   REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: immortalwrt-v6.config
-  DIY_P1_SH: diy-immortalwrt-part1.sh
-  DIY_P2_SH: diy-immortalwrt-part2.sh
+  DIY_P1_SH: immortalwrt/diy-immortalwrt-part1.sh
+  DIY_P2_SH: immortalwrt/diy-immortalwrt-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true

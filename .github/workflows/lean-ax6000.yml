@@ -25,10 +25,10 @@ env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE_4: ax6000-v4.config
-  CONFIG_FILE_6: ax6000-v6.config
-  DIY_P1_SH: diy-ax6000-part1.sh
-  DIY_P2_SH: diy-ax6000-part2.sh
+  CONFIG_FILE_4: lede/ax6000/ax6000-v4.config
+  CONFIG_FILE_6: lede/ax6000/ax6000-v6.config
+  DIY_P1_SH: lede/ax6000/diy-ax6000-part1.sh
+  DIY_P2_SH: lede/ax6000/diy-ax6000-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -54,8 +54,7 @@ jobs:
 
     - name: 检出项目分支
       uses: actions/checkout@main
-      with:
-        ref: lede-ax6000
+
 
     - name: 安装编译环境
       env:
