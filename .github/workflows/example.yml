@@ -49,7 +49,7 @@ jobs:
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
-        timezoneLinux: Asia/Shanghai
+        timezone: "Asia/Shanghai"
 
     - name: 检出项目分支
       uses: actions/checkout@main
