@@ -20,3 +20,4 @@ sed -i '$a src-git luci_app_ddns_go https://github.com/sirpdboy/luci-app-ddns-go
 git clone https://github.com/IrineSistiana/mosdns package/mosdns
 git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
 git clone https://github.com/sbwml/v2ray-geodata package/geodata
+./scripts/feeds update -a && ./scripts/feeds install -a
