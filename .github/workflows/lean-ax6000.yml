@@ -45,7 +45,7 @@ env:
   USER_TOOLCHAIN: false
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
     steps:
     - name: 设定时区
@@ -76,6 +76,7 @@ jobs:
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        ln -s /workdir/dl /workdir/openwrt/dl
         wget -O openwrt/target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dts https://tinyurl.com/x-wrt-ax6000-dts
 
     - name: 自定义软件源
