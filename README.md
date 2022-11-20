@@ -9,6 +9,7 @@ padavanonly固件源码地址：[padavanonly/immortalwrtARM (github.com)](https:
 由衷感谢所有为openwrt无私奉献的大佬们。
 
 ## 固件说明：
+
 AX6000闭源WiFi驱动版
 
 ### 红米AX6000有两种版本，每个版本包含
@@ -25,9 +26,8 @@ AX6000闭源WiFi驱动版
 |   IP   | 172.16.3.2 |
 | 用户名 |    root    |
 |  密码  |     空     |
-|  2.4G  |  Openwrt   |
-|   5G   | Openwrt_5G |
-
+|  2.4G  |  Openwrt  |
+|   5G   | Openwrt5G |
 
 ## 软件清单
 
@@ -36,8 +36,6 @@ AX6000闭源WiFi驱动版
 * vlmcsd
 * wireguard
 * ddns-go
-
-
 
 ## 固件下载
 
