@@ -16,10 +16,10 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: 0 4 * * *
-  push:
-    branches: [ main ]
+  schedule:
+    - cron: 0 4 * * *
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: padavanonly
