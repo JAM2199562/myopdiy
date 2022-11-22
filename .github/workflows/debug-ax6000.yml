@@ -28,9 +28,9 @@ env:
   REPO_BRANCH: mt7986
   DEVICE_SHORT_NAME: ax6000
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: closed-source/ax6000/closed-source-ax6000-v6.config
-  DIY_P1_SH: closed-source/ax6000/diy-ax6000-part1.sh
-  DIY_P2_SH: closed-source/ax6000/diy-ax6000-part2.sh
+  CONFIG_FILE: ax6000/ax6000.config
+  DIY_P1_SH: ax6000/diy-part1.sh
+  DIY_P2_SH: ax6000/diy-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -48,6 +48,8 @@ jobs:
 
     - name: 检出项目分支
       uses: actions/checkout@main
+      with:
+        ref: padavanonly
 
 
     # - name: 安装编译环境
@@ -167,7 +169,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: closed-source-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
+        name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE}}
 
     - name: 创建release标签
@@ -201,7 +203,7 @@ jobs:
       with:
         name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
+        body_path: release.md
         files: |
           ${{ env.FIRMWARE }}/*
 
