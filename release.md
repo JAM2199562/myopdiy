@@ -14,7 +14,3 @@ echo "- luci-app-vlmcsd
 echo "- luci-app-wireguard
 
 **[固件源码](https://github.com/padavanonly/immortalwrtARM)**
-
-
-
-正在测试！！！！
