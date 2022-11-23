@@ -51,7 +51,6 @@ jobs:
       with:
         ref: coolsnowwolf
 
-
     - name: 安装编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -71,21 +70,6 @@ jobs:
         df -hT $PWD
         #git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-
-
-
-
-
-    - name: 调试专用设置
-      run: |
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
-
-
-
-
-
 
     - name: 使用x-wrt的dts文件
       working-directory: /workdir
@@ -113,7 +97,6 @@ jobs:
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         make defconfig
-
 
     - name: 下载安装包
       id: package
@@ -224,10 +207,3 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-    # - name: 清理本地残留
-    #   if: |
-    #   run: |
-    #     cd /workdir
-    #     #ls | grep -v  dl | awk  '{system("rm -rf "$1)}'
-    #     rm -rf openwrt
