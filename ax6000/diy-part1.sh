@@ -9,25 +9,24 @@
 #=============================================================
 
 
-# Add a feed source
-sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
+# 增加feeds
+# sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
+
+# 更新feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
 # 安装v2ray-geodata
-find . -name v2ray-geodata | xargs rm -rf
+find feeds/ -name "*geodata*" | xargs rm -rf
+find package/ -name "*geodata*" | xargs rm -rf
 git clone https://github.com/sbwml/v2ray-geodata package/geodata
 
-#安装mosdns
+# 安装mosdns
+find feeds/ -name "*mosdns*" | xargs rm -rf
+find package/ -name "*mosdns*" | xargs rm -rf
 git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
-
-
-#安装mosdns
-# ./scripts/feeds install  -f -p kiddin9 v2ray-geodata
-# ./scripts/feeds install  -f -p kiddin9 mosdns
-# ./scripts/feeds install  -f -p kiddin9 luci-app-mosdns
-# ls feeds/kiddin9 | grep -v  '\(luci-app-mosdns\|mosdns\|v2ray-geodata\)' | awk  '{system("rm -rf "$1)}'
-git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
-rm -rf feeds/kiddin9/luci-app-mosdns
-rm -rf feeds/packages/net/mosdns
-rm -rf feeds/kiddin9/mosdns
 ./scripts/feeds update -i
+
+# 安装ddns-go
+find feeds/ -name "*ddns-go*" | xargs rm -rf
+find package/ -name "*ddns-go*" | xargs rm -rf
+git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
