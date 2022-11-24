@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: padavanonly-ax6000-每日构建
+name: hanwckf-360t7-每日构建
 
 on:
   repository_dispatch:
@@ -18,19 +18,19 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
-  REPO_AUTHOR: padavanonly
-  REPO_NAME: immortalwrtARM
-  REPO_URL: https://github.com/padavanonly/immortalwrtARM
-  REPO_BRANCH: mt7986
-  DEVICE_SHORT_NAME: ax6000
+  REPO_AUTHOR: hanwckf
+  REPO_NAME: immortalwrt-mt798x
+  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
+  REPO_BRANCH: openwrt-21.02
+  DEVICE_SHORT_NAME: 360t7
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: ax6000/ax6000.config
-  DIY_P1_SH: ax6000/diy-part1.sh
-  DIY_P2_SH: ax6000/diy-part2.sh
+  CONFIG_FILE: 360t7/360t7.config
+  DIY_P1_SH: 360t7/diy-part1.sh
+  DIY_P2_SH: 360t7/diy-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -50,7 +50,8 @@ jobs:
     - name: 检出项目分支
       uses: actions/checkout@main
       with:
-        ref: padavanonly
+        ref: hanwckf
+
 
     - name: 安装编译环境
       env:
@@ -86,7 +87,6 @@ jobs:
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
         cd openwrt
-        cp ax6000.config .config
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: 下载安装包
@@ -165,7 +165,7 @@ jobs:
       run: |
         echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
-        echo "**闭源版AX6000固件，WiFi信号更强，推荐选用。👍👍👍**" >> release.txt
+        echo "**闭源版360t7固件，WiFi信号更强，推荐选用。👍👍👍**" >> release.txt
         echo "**由衷感谢所有为openwrt无私奉献的大佬们🙏🙏🙏**" >> release.txt
         echo " " >> release.txt
         echo "**软件清单**" >> release.txt
@@ -180,7 +180,7 @@ jobs:
         echo "- luci-app-vlmcsd" >> release.txt
         echo "- luci-app-wireguard" >> release.txt
         echo " " >> release.txt
-        echo " **[固件源码](https://github.com/padavanonly/immortalwrtARM)**" >> release.txt
+        echo " **[固件源码](${{env.REPO_URL}})**" >> release.txt
         echo "::set-output name=status::success"
     - name: 发布至release
       uses: softprops/action-gh-release@v1
@@ -206,3 +206,10 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+    # - name: 本地编译时清理残留文件
+    #   if: |
+    #   run: |
+    #     cd /workdir
+    #     #ls | grep -v  dl | awk  '{system("rm -rf "$1)}'
+    #     rm -rf openwrt
