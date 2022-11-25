@@ -13,7 +13,7 @@
 # # sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
 
 # # 更新feeds
-# ./scripts/feeds update -a && ./scripts/feeds install -a
+./scripts/feeds update -a && ./scripts/feeds install -a
 
 # # 安装v2ray-geodata
 # find feeds/ -name "*geodata*" | xargs rm -rf
