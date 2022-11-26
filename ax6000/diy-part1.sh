@@ -15,18 +15,8 @@
 # # 更新feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
-# # 安装v2ray-geodata
-# find feeds/ -name "*geodata*" | xargs rm -rf
-# find package/ -name "*geodata*" | xargs rm -rf
-# git clone https://github.com/sbwml/v2ray-geodata package/geodata
 
-# # 安装mosdns
-# find feeds/ -name "*mosdns*" | xargs rm -rf
-# find package/ -name "*mosdns*" | xargs rm -rf
-# git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
-# ./scripts/feeds update -i
-
-# # 安装ddns-go
-# find feeds/ -name "*ddns-go*" | xargs rm -rf
-# find package/ -name "*ddns-go*" | xargs rm -rf
-# git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
+# 安装ddns-go
+find feeds/ -name "*ddns-go*" | xargs rm -rf
+find package/ -name "*ddns-go*" | xargs rm -rf
+git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
