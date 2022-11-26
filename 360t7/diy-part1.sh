@@ -26,7 +26,7 @@
 # git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
 # ./scripts/feeds update -i
 
-# # 安装ddns-go
-# find feeds/ -name "*ddns-go*" | xargs rm -rf
-# find package/ -name "*ddns-go*" | xargs rm -rf
-# git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
+# 安装ddns-go
+find feeds/ -name "*ddns-go*" | xargs rm -rf
+find package/ -name "*ddns-go*" | xargs rm -rf
+git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
