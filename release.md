@@ -4,7 +4,7 @@
 **软件清单**
 
 - helloworld
-- luci-app-ddns-go(TBD)
+- luci-app-ddns-go
 - luci-app-mosdns
 - luci-app-mwan3
 - luci-app-syncdial
