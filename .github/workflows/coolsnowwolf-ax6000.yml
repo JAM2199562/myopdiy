@@ -69,13 +69,14 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        #git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        git clone  $REPO_URL ${{env.SOURCE_ROOT}}
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
-    - name: 使用x-wrt的dts文件
-      working-directory: /workdir
-      run: |
-        wget -O openwrt/target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dts https://tinyurl.com/x-wrt-ax6000-dts
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 自定义软件源
       run: |
