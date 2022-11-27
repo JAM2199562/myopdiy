@@ -12,13 +12,8 @@
 wget -O target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dts https://tinyurl.com/x-wrt-ax6000-dts
 
 # # 增加feeds
-# # sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
+sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
 
-# # 更新feeds
+# # 更新软件
+# # 这样设计的考虑是防止外挂软件包覆盖原作者的feeds设置
 ./scripts/feeds update -a && ./scripts/feeds install -a
-
-
-# 安装ddns-go
-find feeds/ -name "*ddns-go*" | xargs rm -rf
-find package/ -name "*ddns-go*" | xargs rm -rf
-git clone https://github.com/sirpdboy/luci-app-ddns-go.git package/ddns-go
