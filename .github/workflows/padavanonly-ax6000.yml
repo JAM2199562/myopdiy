@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 6 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: padavanonly
@@ -41,6 +41,7 @@ jobs:
   build:
     # runs-on: [self-hosted, king]
     runs-on: ubuntu-20.04
+    # runs-on: [self-hosted, nuc11]
     steps:
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
