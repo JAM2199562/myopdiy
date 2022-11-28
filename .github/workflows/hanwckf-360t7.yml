@@ -164,24 +164,8 @@ jobs:
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
         echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
-        touch release.txt
-        echo "**闭源版360t7固件，WiFi信号更强，推荐选用。👍👍👍**" >> release.txt
-        echo "**由衷感谢所有为openwrt无私奉献的大佬们🙏🙏🙏**" >> release.txt
-        echo " " >> release.txt
-        echo "**软件清单**" >> release.txt
-        echo " " >> release.txt
-        echo "- helloworld" >> release.txt
-        echo "- luci-app-cpufreq" >> release.txt
-        echo "- luci-app-ddns-go" >> release.txt
-        echo "- luci-app-mosdns" >> release.txt
-        echo "- luci-app-mwan3" >> release.txt
-        echo "- luci-app-syncdial" >> release.txt
-        echo "- luci-app-upnp" >> release.txt
-        echo "- luci-app-vlmcsd" >> release.txt
-        echo "- luci-app-wireguard" >> release.txt
-        echo " " >> release.txt
-        echo " **[固件源码](${{env.REPO_URL}})**" >> release.txt
         echo "::set-output name=status::success"
+
     - name: 发布至release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
