@@ -41,6 +41,10 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
+    - name: 定义代码根路径
+      run: |
+        echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
+
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
@@ -68,7 +72,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone  $REPO_URL ${{env.SOURCE_ROOT}}
+        git clone  $REPO_URL --depth 1 --single-branch ${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 下载插件
@@ -153,6 +157,7 @@ jobs:
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
         rm -rf packages
+        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 

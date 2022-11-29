@@ -16,8 +16,8 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  schedule:
-    - cron: 0 6 * * *
+  # schedule:
+    # - cron: 0 6 * * *
   push:
     branches: [ main ]
 
@@ -39,10 +39,13 @@ env:
 
 jobs:
   build:
-    # runs-on: [self-hosted, king]
     runs-on: ubuntu-20.04
     # runs-on: [self-hosted, nuc11]
     steps:
+    - name: 定义代码根路径
+      run: |
+        echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
+
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
@@ -70,8 +73,14 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        git clone  $REPO_URL --depth 1 --single-branch ${{env.SOURCE_ROOT}}
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 自定义软件源
       run: |
@@ -87,7 +96,7 @@ jobs:
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
         cd openwrt
-        cp ax6000.config .config
+        # cp ax6000.config .config
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: 下载安装包
@@ -100,8 +109,8 @@ jobs:
         echo 'CONFIG_DOWNLOAD_FOLDER="/workdir/dl"' >> .config
         make defconfig
         make download -j8
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
+        find /workdir/dl -size -1024c -exec ls -l {} \;
+        find /workdir/dl -size -1024c -exec rm -f {} \;
       if: true
 
     - name: 更新配置
@@ -150,6 +159,7 @@ jobs:
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
         rm -rf packages
+        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
 
