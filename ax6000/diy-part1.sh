@@ -10,7 +10,7 @@
 
 # # 使用x-wrt的dts文件
 wget -O target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dts https://tinyurl.com/x-wrt-ax6000-dts-stock
-
+wget -O target/linux/mediatek/dts/mt7986a-xiaomi-redmi-router-ax6000.dtsi https://tinyurl.com/x-wrt-ax6000-dtsi
 # # 增加feeds
 sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.conf.default
 
