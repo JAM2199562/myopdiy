@@ -73,7 +73,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone  $REPO_URL --depth 1 --single-branch ${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 下载插件
@@ -106,8 +106,8 @@ jobs:
         make defconfig
         make download -j8
         [ -e /workdir/dl ] && mv /workdir/dl/ dl/
-        find /workdir/dl -size -1024c -exec ls -l {} \;
-        find /workdir/dl -size -1024c -exec rm -f {} \;
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
       if: true
 
     - name: 更新配置

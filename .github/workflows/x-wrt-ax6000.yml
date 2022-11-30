@@ -68,8 +68,8 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 自定义软件源
       run: |
@@ -80,7 +80,6 @@ jobs:
 
     - name: 更改固件设置
       run: |
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
@@ -94,8 +93,8 @@ jobs:
         make defconfig
         make download -j8
         [ -e /workdir/dl ] && mv /workdir/dl/ dl/
-        find /workdir/dl -size -1024c -exec ls -l {} \;
-        find /workdir/dl -size -1024c -exec rm -f {} \;
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
       if: true
 
     - name: 更新配置

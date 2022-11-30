@@ -72,7 +72,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        # git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 下载插件
