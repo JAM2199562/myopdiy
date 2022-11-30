@@ -102,13 +102,10 @@ jobs:
     - name: 下载安装包
       id: package
       run: |
-        mkdir /workdir/dl
-        [ -e dl ] && mv dl/* /workdir/dl/
         cd openwrt
-        echo "CONFIG_DEVEL=y" >> .config
-        echo 'CONFIG_DOWNLOAD_FOLDER="/workdir/dl"' >> .config
         make defconfig
         make download -j8
+        [ -e /workdir/dl ] && mv /workdir/dl/ dl/
         find /workdir/dl -size -1024c -exec ls -l {} \;
         find /workdir/dl -size -1024c -exec rm -f {} \;
       if: true
