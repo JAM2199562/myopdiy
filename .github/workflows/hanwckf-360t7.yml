@@ -39,8 +39,14 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    # runs-on: ubuntu-20.04
+    runs-on: [self-hosted]
+
     steps:
+    - name: 定义代码根路径
+      run: |
+        echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
+
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
@@ -50,7 +56,6 @@ jobs:
       uses: actions/checkout@main
       with:
         ref: hanwckf
-
 
     - name: 安装编译环境
       env:
@@ -69,8 +74,14 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        # git clone -b $REPO_BRANCH --single-branch $REPO_URL --depth 1 openwrt
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 自定义软件源
       run: |
@@ -81,17 +92,21 @@ jobs:
 
     - name: 更改固件设置
       run: |
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: 更新配置
+      run: |
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
+        cd openwrt
+        make defconfig
+
     - name: 下载安装包
       id: package
       run: |
-        mkdir /workdir/dl
         [ -e dl ] && mv dl/* /workdir/dl/
         cd openwrt
         echo "CONFIG_DEVEL=y" >> .config
@@ -102,12 +117,6 @@ jobs:
         find /workdir/dl -size -1024c -exec rm -f {} \;
       if: true
 
-    - name: 更新配置
-      run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
-        cd openwrt
-        make defconfig
-
     - name: 开始编译固件
       id: compile
       run: |
@@ -115,8 +124,8 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "::set-output name=status::success"
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        # grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        # [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
@@ -191,9 +200,3 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
-    # - name: 本地编译时清理残留文件
-    #   if: |
-    #   run: |
-    #     cd /workdir
-    #     #ls | grep -v  dl | awk  '{system("rm -rf "$1)}'
-    #     rm -rf openwrt
