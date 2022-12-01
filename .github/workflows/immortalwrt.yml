@@ -216,7 +216,7 @@ jobs:
         (for var in *.gz; do mv "$var" "IPV6/$FILE_TIME-${var%.gz}-IPV6.gz"; done) ||true
         (for var in *.json; do mv "$var" "IPV6/$FILE_TIME-${var%.json}-IPV6.json"; done) ||true
         (for var in *.qcow2; do mv "$var" "IPV6/$FILE_TIME-${var%.qcow2}-IPV6.qcow2"; done) ||true
-        (for var in *.vmdk; do mv "$var" "IPV6/$FILE_TIME-${var%.vmdk}-IPV4.vmdk"; done) || true
+        (for var in *.vmdk; do mv "$var" "IPV6/$FILE_TIME-${var%.vmdk}-IPV6.vmdk"; done) || true
 
         echo "FIRMWARE_6=$PWD/IPV6" >> $GITHUB_ENV
         echo "::set-output name=status::success"
