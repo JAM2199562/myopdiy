@@ -41,6 +41,10 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
+    - name: 定义代码根路径
+      run: |
+        echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
+
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
       with:
@@ -92,7 +96,7 @@ jobs:
         cd openwrt
         make defconfig
         make download -j8
-        [ -e /workdir/dl ] && mv /workdir/dl/ dl/
+        [ -e /workdir/dl ] && mv /workdir/dl/* dl/
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true

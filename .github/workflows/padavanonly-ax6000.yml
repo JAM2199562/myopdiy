@@ -114,6 +114,7 @@ jobs:
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
+        cat ax6000.config >> .config
         make defconfig
 
     - name: 开始编译固件
