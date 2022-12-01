@@ -16,10 +16,10 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: 0 3 * * *
-  push:
-    branches: [ main ]
+  schedule:
+    - cron: 0 3 * * *
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -189,10 +189,10 @@ jobs:
       run: ls -al openwrt/bin/targets/*/* || true
 
     - name: 删除旧的Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
+      uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 30
+        keep_latest: 5
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -201,4 +201,5 @@ jobs:
       uses: Mattraks/delete-workflow-runs@v2
       with:
         retain_days: 1
-        keep_minimum_runs: 12
+        keep_minimum_runs: 3
+

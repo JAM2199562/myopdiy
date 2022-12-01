@@ -16,8 +16,8 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-    # - cron: 0 6 * * *
+  schedule:
+    - cron: 0 6 * * *
   # push:
   #   branches: [ main ]
 
@@ -40,7 +40,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    # runs-on: [self-hosted, nuc11]
     steps:
     - name: 定义代码根路径
       run: |
@@ -75,6 +74,17 @@ jobs:
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+
+##########################################################################
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+          cd /workdir/padavanonly_immortalwrtARM
+          git checkout feeds.conf.default
+          rm -rf dl/go-mod-cache/
+          rm -rf files
+##########################################################################
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
@@ -192,7 +202,7 @@ jobs:
       run: ls -al openwrt/bin/targets/*/* || true
 
     - name: 删除旧的Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
+      uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
         keep_latest: 30
