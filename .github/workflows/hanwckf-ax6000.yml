@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: x-wrt-ax6000-每日构建
+name: hanwckf-ax6000-每日构建
 
 on:
   repository_dispatch:
@@ -17,15 +17,15 @@ on:
         required: false
         default: 'false'
   # schedule:
-  #   - cron: 0 9 * * *
-  # push:
-  #   branches: [ main ]
+  #   - cron: 0 3 * * *
+  push:
+    branches: [ main ]
 
 env:
-  REPO_AUTHOR: x-wrt
-  REPO_NAME: x-wrt
-  REPO_URL: https://github.com/x-wrt/x-wrt
-  REPO_BRANCH: master
+  REPO_AUTHOR: hanwckf
+  REPO_NAME: immortalwrt-mt798x
+  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
+  REPO_BRANCH: openwrt-21.02
   DEVICE_SHORT_NAME: ax6000
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: ax6000/ax6000.config
@@ -39,7 +39,8 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    # runs-on: ubuntu-20.04
+    runs-on: [self-hosted]
     steps:
     - name: 定义代码根路径
       run: |
@@ -53,7 +54,7 @@ jobs:
     - name: 检出项目分支
       uses: actions/checkout@main
       with:
-        ref: x-wrt
+        ref: hanwckf
 
     - name: 安装编译环境
       env:
@@ -72,8 +73,27 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+
+##########################################################################
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+          cd /workdir/hanwckf_immortalwrt-mt798x
+          git checkout feeds.conf.default
+          git checkout include/image.mk
+          rm -rf dl/go-mod-cache/
+          rm -rf files
+          rm -rf .config
+##########################################################################
+
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 自定义软件源
       run: |
@@ -90,22 +110,23 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: 更新配置
+      run: |
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
+        cd openwrt
+        cat defconfig/mt7986-ax6000.config >> .config
+        make defconfig
+
     - name: 下载安装包
       id: package
       run: |
         cd openwrt
         make defconfig
         make download -j8
-        [ -e /workdir/dl ] && mv /workdir/dl/* dl/
+        [ -e /workdir/dl ] && mv /workdir/dl/ dl/
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true
-
-    - name: 更新配置
-      run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
-        cd openwrt
-        make defconfig
 
     - name: 开始编译固件
       id: compile
@@ -114,8 +135,8 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "::set-output name=status::success"
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        # grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        # [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
@@ -138,7 +159,6 @@ jobs:
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        rm -rf openwrt/bin/targets/ath79
         cd openwrt/bin/targets/*/*
         rm -rf packages && mkdir packages
         find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
@@ -186,7 +206,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 30
+        keep_latest: 5
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

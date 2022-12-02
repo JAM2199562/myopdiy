@@ -16,8 +16,8 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  schedule:
-    - cron: 0 6 * * *
+  # schedule:
+  #   - cron: 0 6 * * *
   # push:
   #   branches: [ main ]
 
@@ -74,17 +74,6 @@ jobs:
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
-
-##########################################################################
-    - name: 清理编译残存
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-          cd /workdir/padavanonly_immortalwrtARM
-          git checkout feeds.conf.default
-          rm -rf dl/go-mod-cache/
-          rm -rf files
-##########################################################################
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
