@@ -75,6 +75,19 @@ jobs:
     #     git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
     #     ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
+##########################################################################
+    # - name: 清理编译残存
+    #   env:
+    #     DEBIAN_FRONTEND: noninteractive
+    #   run: |
+    #       cd /workdir/hanwckf_immortalwrt-mt798x
+    #       git checkout feeds.conf.default
+    #       git checkout include/image.mk
+    #       rm -rf dl/go-mod-cache/
+    #       rm -rf files
+    #       rm -rf .config
+##########################################################################
+
     # - name: 下载插件
     #   run: cd openwrt && ./scripts/feeds update -a
 
@@ -200,7 +213,7 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 0
-        keep_minimum_runs: 0
+        retain_days: 1
+        keep_minimum_runs: 1
 
 

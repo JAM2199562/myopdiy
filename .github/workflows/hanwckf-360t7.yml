@@ -16,10 +16,10 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  schedule:
+    - cron: 0 3 * * *
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -192,7 +192,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 5
+        keep_latest: 30
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -200,6 +200,6 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 1
-        keep_minimum_runs: 3
+        retain_days: 2
+        keep_minimum_runs: 12
 
