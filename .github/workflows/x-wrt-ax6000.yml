@@ -75,6 +75,12 @@ jobs:
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
+
     - name: 自定义软件源
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
@@ -84,6 +90,7 @@ jobs:
 
     - name: 更改固件设置
       run: |
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
@@ -96,7 +103,7 @@ jobs:
         cd openwrt
         make defconfig
         make download -j8
-        [ -e /workdir/dl ] && mv /workdir/dl/* dl/
+        [ -e /workdir/dl ] && cp /workdir/dl/* dl/
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true
@@ -113,7 +120,7 @@ jobs:
         cd openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) ||make -j2 || make -j1 V=s
-        echo "::set-output name=status::success"
+        echo "{compile_status}={success}" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
@@ -150,11 +157,11 @@ jobs:
         rm -rf packages
         (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传固件到github action
       uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+      if:  ${{env.STATE.compile_status}} == 'success' && !cancelled()
       with:
         name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE}}
@@ -163,17 +170,17 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
-        echo "::set-output name=status::success"
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+        echo "{tag.status}={success}" >> $GITHUB_OUTPUT
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: ${{env.STATE.tag_status}} == 'success1' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
-        tag_name: ${{ steps.tag.outputs.release_tag }}
+        tag_name: ${{env.release_tag}}
         body_path: release.md
         files: |
           ${{ env.FIRMWARE }}/*

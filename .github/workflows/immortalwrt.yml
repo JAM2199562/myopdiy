@@ -119,7 +119,7 @@ jobs:
         cd openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make package/feeds/luci/luci-base/compile V=s ||  make -j1 || make -j1 V=s
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
@@ -169,7 +169,7 @@ jobs:
         (for var in *.vmdk; do mv "$var" "IPV4/$FILE_TIME-${var%.vmdk}-IPV4.vmdk"; done) || true
 
         echo "FIRMWARE_4=$PWD/IPV4" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传v4固件到github action
       uses: actions/upload-artifact@main
@@ -191,7 +191,7 @@ jobs:
         cd openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 查看目录
       if: |
@@ -219,7 +219,7 @@ jobs:
         (for var in *.vmdk; do mv "$var" "IPV6/$FILE_TIME-${var%.vmdk}-IPV6.vmdk"; done) || true
 
         echo "FIRMWARE_6=$PWD/IPV6" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传v6固件到github action
       uses: actions/upload-artifact@main
@@ -232,7 +232,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "{release_tag}={$(date +"%Y.%m.%d-%H%M")}"
         touch release.txt
         echo "精简固件，只安装了很少的软件。" >> release.txt
         echo "[固件源码]($REPO_URL)" >> release.txt
@@ -243,7 +243,7 @@ jobs:
         echo "luci-app-wireguard" >> release.txt
         echo "luci-app-vlmcsd" >> release.txt
         echo "luci-app-autoreboot" >> release.txt
-        echo "::set-output name=status::success"
+        echo "{status}={success}" >> $GITHUB_OUTPUT
         echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
     - name: 发布至release
       uses: softprops/action-gh-release@v1
@@ -252,7 +252,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         name: 「${{env.FILE_DATE}}」-「 每日构建 」-「${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
-        tag_name: ${{ steps.tag.outputs.release_tag }}
+        tag_name: ${{env.release_tag}}
         body_path: release.txt
         files: |
           ${{ env.FIRMWARE_4 }}/*
