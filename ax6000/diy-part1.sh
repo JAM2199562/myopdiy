@@ -18,5 +18,15 @@ sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages' feeds.co
 
 # # 删除kiddin9中会影响编译的包
 find feeds/ -name base-files | xargs rm -rf
+find feeds/ -name "*mosdns*" | xargs rm -rf
+find feeds/ -name "v2ray-geo*" | xargs rm -rf
+find package/ -name "*mosdns*" | xargs rm -rf
+find package/ -name "v2ray-geo*" | xargs rm -rf
+
+# 安装sbwml的luci-app-mosdns，这个版本的可以正常自动启动
+git clone https://github.com/sbwml/luci-app-mosdns package/luci-app-mosdns
+git clone https://github.com/sbwml/v2ray-geodata package/geodata
+
 ./scripts/feeds update -i
 ./scripts/feeds install -a
+
