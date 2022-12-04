@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: padavanonly

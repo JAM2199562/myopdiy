@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -202,4 +202,3 @@ jobs:
       with:
         retain_days: 2
         keep_minimum_runs: 12
-

@@ -16,8 +16,8 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: 0 3 */3 * *
+  schedule:
+    - cron: 0 3 */3 * *
   # push:
   #   branches: [ main ]
 
