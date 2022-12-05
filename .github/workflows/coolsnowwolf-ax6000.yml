@@ -194,7 +194,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 30
+        keep_latest: 99
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -202,5 +202,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 2
-        keep_minimum_runs: 12
+        retain_days: 99
+        keep_minimum_runs: 99

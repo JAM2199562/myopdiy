@@ -178,31 +178,31 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "{status}={success}" >> $GITHUB_OUTPUT
 
-    - name: 上传固件到github action
-      uses: actions/upload-artifact@main
-      if:  ${{env.STATE.compile_status}} == 'success' && !cancelled()
-      with:
-        name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE}}
+    # - name: 上传固件到github action
+    #   uses: actions/upload-artifact@main
+    #   if:  ${{env.STATE.compile_status}} == 'success' && !cancelled()
+    #   with:
+    #     name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
+    #     path: ${{ env.FIRMWARE}}
 
-    - name: 创建release标签
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
-        echo "{tag.status}={success}" >> $GITHUB_OUTPUT
+    # - name: 创建release标签
+    #   id: tag
+    #   if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+    #   run: |
+    #     echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+    #     echo "{tag.status}={success}" >> $GITHUB_OUTPUT
 
-    - name: 发布至release
-      uses: softprops/action-gh-release@v1
-      if: ${{env.STATE.tag_status}} == 'success1' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      with:
-        name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
-        tag_name: ${{env.release_tag}}
-        body_path: release.md
-        files: |
-          ${{ env.FIRMWARE }}/*
+    # - name: 发布至release
+    #   uses: softprops/action-gh-release@v1
+    #   if: ${{env.STATE.tag_status}} == 'success1' && !cancelled()
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    #   with:
+    #     name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
+    #     tag_name: ${{env.release_tag}}
+    #     body_path: release.md
+    #     files: |
+    #       ${{ env.FIRMWARE }}/*
 
     - name: 查看目录
       if: |
@@ -212,7 +212,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 10
+        keep_latest: 15
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
