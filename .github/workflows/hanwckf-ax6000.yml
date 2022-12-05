@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -107,10 +107,12 @@ jobs:
     - name: 下载安装包
       id: package
       run: |
+        [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
+        [ -e dl ] && cp dl/* openwrt/dl/
+        [ -e /workdir/dl ] && cp /workdir/dl/* openwrt/dl/
         cd openwrt
         make defconfig
         make download -j8
-        [ -e /workdir/dl ] && mv /workdir/dl/ dl/
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true
