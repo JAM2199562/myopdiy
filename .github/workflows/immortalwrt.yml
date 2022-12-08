@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 */3 * *
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: immortalwrt
@@ -84,14 +84,14 @@ jobs:
     - name: 读取插件
       run: cd openwrt && ./scripts/feeds install -a
 
-    - name: 自定义软件源
+    - name: 自定义软件源(DIY_P1)
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 更改固件设置
+    - name: 更新编译配置(DIY_P2)
       run: |
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
@@ -100,7 +100,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 更新配置
+    - name: 追加编译配置
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
@@ -197,7 +197,7 @@ jobs:
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: ${{env.STATE.tag_status}} == 'success1' && !cancelled()
+      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:

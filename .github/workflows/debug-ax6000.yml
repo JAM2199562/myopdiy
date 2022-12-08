@@ -16,16 +16,16 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  # schedule:
-  #   - cron: 0 3 * * *
+  schedule:
+    - cron: 0 23 * * *
   push:
     branches: [ main ]
 
 env:
-  REPO_AUTHOR: padavanonly
-  REPO_NAME: immortalwrtARM
-  REPO_URL: https://github.com/padavanonly/immortalwrtARM
-  REPO_BRANCH: mt7986
+  REPO_AUTHOR: hanwckf
+  REPO_NAME: immortalwrt-mt798x
+  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
+  REPO_BRANCH: openwrt-21.02
   DEVICE_SHORT_NAME: ax6000
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: ax6000/ax6000.config
@@ -39,8 +39,7 @@ env:
 
 jobs:
   build:
-    # runs-on: ubuntu-20.04
-    runs-on: [self-hosted,cloud]
+    runs-on: [self-hosted, ARM64]
     steps:
     - name: 定义代码根路径
       run: |
@@ -54,20 +53,20 @@ jobs:
     - name: 检出项目分支
       uses: actions/checkout@main
       with:
-        ref: padavanonly
+        ref: hanwckf
 
-    # - name: 安装编译环境
-    #   env:
-    #     DEBIAN_FRONTEND: noninteractive
-    #   run: |
-    #     sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-    #     sudo -E apt-get -qq update
-    #     # sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004)
-    #     sudo -E apt-get -qq autoremove --purge
-    #     sudo -E apt-get -qq clean
-    #     sudo timedatectl set-timezone "$TZ"
-    #     sudo mkdir -p /workdir
-    #     sudo chown $USER:$GROUPS /workdir
+    - name: 安装编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004) || true
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
 
     - name: 下载固件源码
       working-directory: /workdir
@@ -77,72 +76,76 @@ jobs:
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
 ##########################################################################
-    # - name: 清理编译残存
-    #   env:
-    #     DEBIAN_FRONTEND: noninteractive
-    #   run: |
-    #       cd /workdir/${{env.SOURCE_ROOT}}
-    #       git checkout feeds.conf.default
-    #       git checkout include/image.mk
-    #       rm -rf dl/go-mod-cache/
-    #       rm -rf files
-    #       rm -rf .config
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+          cd /workdir/${{env.SOURCE_ROOT}}
+          git reset --hard
+          git checkout feeds.conf.default
+          git checkout include/image.mk
+          rm -rf dl/go-mod-cache/
+          rm -rf /workdir/dl/go-mod-cache/
+          rm -rf files
+          rm -rf .config
+          rm -rf bin/targets/*/*
+          rm -rf package/mosdns
+          rm -rf package/v2ray-geodata
+          rm -rf package/luci-app-ddns-go
+          git checkout package
 ##########################################################################
 
-    # - name: 下载插件
-    #   run: cd openwrt && ./scripts/feeds update -a
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
 
-    # - name: 读取插件
-    #   run: cd openwrt && ./scripts/feeds install -a
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
-    # - name: 自定义软件源
-    #   run: |
-    #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-    #     chmod +x $DIY_P1_SH
-    #     cd openwrt
-    #     $GITHUB_WORKSPACE/$DIY_P1_SH
+    - name: 自定义软件源(DIY_P1)
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    # - name: 更改固件设置
-    #   run: |
-    #     ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-    #     [ -e files ] && mv files openwrt/files
-    #     chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
-    #     chmod +x $DIY_P2_SH
-    #     cd openwrt
-    #     # cp ax6000.config .config
-    #     $GITHUB_WORKSPACE/$DIY_P2_SH
+    - name: 更新编译配置(DIY_P2)
+      run: |
+        [ -e files ] && mv files openwrt/files
+        chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: 追加编译配置
+      run: |
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
+        cd openwrt
+        cat defconfig/mt7986-ax6000.config >> .config
+        echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
+        make defconfig
 
-    # - name: 下载安装包
-    #   id: package
-    #   run: |
-    #     [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
-    #     [ -e dl ] && cp dl/* openwrt/dl/
-    #     [ -e /workdir/dl ] && cp /workdir/dl/* openwrt/dl/
-    #     cd openwrt
-    #     make defconfig
-    #     make download -j8
-    #     find dl -size -1024c -exec ls -l {} \;
-    #     find dl -size -1024c -exec rm -f {} \;
-    #   if: true
-
-    # - name: 更新配置
-    #   run: |
-    #     [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
-    #     cd openwrt
-    #     cat ax6000.config >> .config
-    #     make defconfig
+    - name: 下载软件包
+      id: package
+      run: |
+        [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
+        [ -e dl ] && cp dl/* openwrt/dl/
+        [ -e /workdir/dl ] && cp /workdir/dl/* openwrt/dl/
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+      if: true
 
     - name: 开始编译固件
       id: compile
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        # make -j$(nproc) ||make -j2 || make -j1 V=s
-        echo "true"
+        make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        # grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        # [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME | head -n1)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
@@ -178,31 +181,31 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "{status}={success}" >> $GITHUB_OUTPUT
 
-    # - name: 上传固件到github action
-    #   uses: actions/upload-artifact@main
-    #   if:  ${{env.STATE.compile_status}} == 'success' && !cancelled()
-    #   with:
-    #     name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
-    #     path: ${{ env.FIRMWARE}}
+    - name: 上传固件到github action
+      uses: actions/upload-artifact@main
+      if: ${{env.STATE.compile_status}} == 'success' && !cancelled()
+      with:
+        name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE}}
 
-    # - name: 创建release标签
-    #   id: tag
-    #   if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-    #   run: |
-    #     echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
-    #     echo "{tag.status}={success}" >> $GITHUB_OUTPUT
+    - name: 创建release标签
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+        echo "{tag.status}={success}" >> $GITHUB_OUTPUT
 
-    # - name: 发布至release
-    #   uses: softprops/action-gh-release@v1
-    #   if: ${{env.STATE.tag_status}} == 'success1' && !cancelled()
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-    #   with:
-    #     name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
-    #     tag_name: ${{env.release_tag}}
-    #     body_path: release.md
-    #     files: |
-    #       ${{ env.FIRMWARE }}/*
+    - name: 发布至release
+      uses: softprops/action-gh-release@v1
+      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
+        tag_name: ${{env.release_tag}}
+        body_path: release.md
+        files: |
+          ${{ env.FIRMWARE }}/*
 
     - name: 查看目录
       if: |
@@ -212,7 +215,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 15
+        keep_latest: 30
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -220,6 +223,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 0
-        keep_minimum_runs: 0
-      if: true
+        retain_days: 1
+        keep_minimum_runs: 3
