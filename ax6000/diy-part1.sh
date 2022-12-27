@@ -10,8 +10,9 @@
 
 #增加luci-app-mosdns
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/luci-app-mosdns
+sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config/mosdns
 
-#增加luci-app-mosdns
+#增加luci-app-ddns-go
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/luci-app-ddns-go
 
 # # 增加feeds
