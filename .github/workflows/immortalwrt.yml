@@ -93,7 +93,6 @@ jobs:
 
     - name: 更新编译配置(DIY_P2)
       run: |
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH

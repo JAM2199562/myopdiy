@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: 调试专用
+name: immortalwrt-x86-调试
 
 on:
   repository_dispatch:
@@ -17,25 +17,28 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 23 * * *
+    - cron: 0 3 */3 * *
   push:
     branches: [ main ]
 
 env:
-  REPO_AUTHOR: hanwckf
-  REPO_NAME: immortalwrt-mt798x
-  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
+  REPO_AUTHOR: immortalwrt
+  REPO_NAME: immortalwrt
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: openwrt-21.02
-  DEVICE_SHORT_NAME: ax6000
+  DEVICE_SHORT_NAME: x86
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: ax6000/ax6000.config
-  DIY_P1_SH: ax6000/diy-part1.sh
-  DIY_P2_SH: ax6000/diy-part2.sh
+  CONFIG_FILE: immortalwrt/x86/immortalwrt-x86.config
+  DIY_P1_SH: immortalwrt/x86/diy-immortalwrt-part1.sh
+  DIY_P2_SH: immortalwrt/x86/diy-immortalwrt-part2.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
+  USER_TOOLCHAIN: false
 
 jobs:
   build:
@@ -53,7 +56,7 @@ jobs:
     - name: 检出项目分支
       uses: actions/checkout@main
       with:
-        ref: hanwckf
+        ref: immortalwrt
 
     - name: 安装编译环境
       env:
@@ -61,19 +64,12 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004) || true
+        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004) ||true
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-
-    - name: 下载固件源码
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
 ##########################################################################
     - name: 清理编译残存
@@ -81,7 +77,6 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
           cd /workdir/${{env.SOURCE_ROOT}}
-          git reset --hard
           git checkout feeds.conf.default
           git checkout include/image.mk
           rm -rf dl/go-mod-cache/
@@ -93,7 +88,17 @@ jobs:
           rm -rf package/v2ray-geodata
           rm -rf package/luci-app-ddns-go
           git checkout package
+          # # ARM编译专用设置
+          # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
+          echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
 ##########################################################################
+
+    - name: 下载固件源码
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
@@ -120,11 +125,9 @@ jobs:
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
-        cat defconfig/mt7986-ax6000.config >> .config
-        echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
         make defconfig
 
-    - name: 下载软件包
+    - name: 下载安装包
       id: package
       run: |
         [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
@@ -144,8 +147,8 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-        # grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        # [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME | head -n1)" >> $GITHUB_ENV
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
@@ -177,13 +180,19 @@ jobs:
         find -name "*vmlinuz*" | xargs -i mv -f {} packages
         find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
         rm -rf packages
-        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
+        (for var in *.bin; do mv "$var" "$FILE_TIME-${var%.bin}.bin"; done) ||true
+        (for var in *.buildinfo; do mv "$var" "$FILE_TIME-${var%.buildinfo}.buildinfo"; done) ||true
+        (for var in *.gz; do mv "$var" "$FILE_TIME-${var%.gz}.gz"; done) ||true
+        (for var in *.json; do mv "$var" "$FILE_TIME-${var%.json}.json"; done) ||true
+        (for var in *.qcow2; do mv "$var" "$FILE_TIME-${var%.qcow2}.qcow2"; done) ||true
+        (for var in *.vmdk; do mv "$var" "$FILE_TIME-${var%.vmdk}.vmdk"; done) || true
+
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传固件到github action
       uses: actions/upload-artifact@main
-      if: ${{env.STATE.compile_status}} == 'success' && !cancelled()
+      if:  ${{env.STATE.compile_status}} == 'success' && !cancelled()
       with:
         name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE}}
@@ -194,6 +203,18 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
         echo "{tag.status}={success}" >> $GITHUB_OUTPUT
+        touch release.txt
+        echo "精简固件，只安装了很少的软件。" >> release.txt
+        echo "[固件源码]($REPO_URL)" >> release.txt
+        echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "**软件清单**" >> release.txt
+        echo "luci-app-helloword😁😁😁" >> release.txt
+        echo "luci-app-mosdns" >> release.txt
+        echo "luci-app-wireguard" >> release.txt
+        echo "luci-app-vlmcsd" >> release.txt
+        echo "luci-app-autoreboot" >> release.txt
+        echo "{status}={success}" >> $GITHUB_OUTPUT
+        echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
@@ -203,7 +224,7 @@ jobs:
       with:
         name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
         tag_name: ${{env.release_tag}}
-        body_path: release.md
+        body_path: release.txt
         files: |
           ${{ env.FIRMWARE }}/*
 
@@ -223,5 +244,6 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 1
-        keep_minimum_runs: 3
+        retain_days: 0
+        keep_minimum_runs: 0
+
