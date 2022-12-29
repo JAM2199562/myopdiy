@@ -5,12 +5,16 @@
 
 - helloworld
 - luci-app-cpufreq
-- luci-app-ddns-go(TBD)
-- luci-app-mosdns(TBD)
+- luci-app-ddns-go
+- luci-app-mosdns
 - luci-app-mwan3
 - luci-app-syncdial
+- luci-app-openclash
 - luci-app-upnp
 - luci-app-vlmcsd
 - luci-app-wireguard
+- luci-app-adguardhome
+- luci-app-autoreboot
+- luci-app-lucky(大吉)
 
 **[固件源码](https://github.com/padavanonly/immortalwrtARM)**
