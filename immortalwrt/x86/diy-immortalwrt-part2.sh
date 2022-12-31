@@ -18,7 +18,7 @@ sed -i 's/192.168.1.1/172.16.3.2/g' package/base-files/files/bin/config_generate
 sed -i 's/192.168/172.16/g' package/base-files/files/bin/config_generate
 
 # Install easymosdns
-wget https://mirror.apad.pro/dns/easymosdns.tar.gz
+[ ! -e easymosdns.tar.gz ] && wget https://mirror.apad.pro/dns/easymosdns.tar.gz
 tar xzf easymosdns.tar.gz
 mv -f easymosdns/ files/etc/mosdns/
 mosdns_working_dir="files/etc/mosdns"
