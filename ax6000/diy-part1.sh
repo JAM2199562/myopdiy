@@ -17,3 +17,6 @@ git clone https://github.com/sirpdboy/luci-app-ddns-go package/luci-app-ddns-go
 
 # 增加luci-app-lucky
 git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
+
+# 增加cloudflared
+git clone https://github.com/yichya/openwrt-cloudflared package/cloudflared
