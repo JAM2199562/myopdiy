@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: hanwckf-ax6000-调试
+name: padavanonly-ax6000-调试
 
 on:
   repository_dispatch:
@@ -17,15 +17,15 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 23 * * *
+    - cron: 0 3 * * *
   push:
     branches: [ main ]
 
 env:
-  REPO_AUTHOR: hanwckf
-  REPO_NAME: immortalwrt-mt798x
-  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
-  REPO_BRANCH: openwrt-21.02
+  REPO_AUTHOR: padavanonly
+  REPO_NAME: immortalwrtARM
+  REPO_URL: https://github.com/padavanonly/immortalwrtARM
+  REPO_BRANCH: mt7986
   DEVICE_SHORT_NAME: ax6000
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: ax6000/ax6000.config
@@ -37,7 +37,6 @@ env:
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
   CLEANUP_WORKDIR: true
-
 jobs:
   build:
     runs-on: [self-hosted, ARM64]
@@ -54,7 +53,7 @@ jobs:
     - name: 检出项目分支
       uses: actions/checkout@main
       with:
-        ref: hanwckf
+        ref: padavanonly
 
     - name: 安装编译环境
       env:
@@ -97,7 +96,7 @@ jobs:
           git checkout package
           # # ARM编译专用设置
           # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
+          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
@@ -124,10 +123,18 @@ jobs:
 
     - name: 追加编译配置
       run: |
-        cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
-        cat defconfig/mt7986-ax6000.config >> .config
-        make defconfig
+        cat ax6000.config >> .config
+        cd $GITHUB_WORKSPACE
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
@@ -148,89 +155,92 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
       if: true
 
-    - name: 开始编译固件
-      id: compile
-      run: |
-        cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) ||make -j2 || make -j1 V=s
-        echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+    # - name: 开始编译固件
+    #   id: compile
+    #   run: |
+    #     cd openwrt
+    #     echo -e "$(nproc) thread compile"
+    #     make -j$(nproc) ||make -j2 || make -j1 V=s
+    #     echo "{compile_status}={success}" >> $GITHUB_OUTPUT
+    #     grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+    #     [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME | head -n1)" >> $GITHUB_ENV
+    #     echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+    #     echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
-    - name: 查看磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
+    # - name: 查看磁盘使用情况
+    #   if: (!cancelled())
+    #   run: df -hT
 
-    - name: 查看目录
-      if: |
-      run: ls -al openwrt/bin/targets/*/* || true
+    # - name: 查看目录
+    #   if: |
+    #   run: ls -al openwrt/bin/targets/*/* || true
 
-    - name: 上传bin压缩目录
-      uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_bin${{ env.DEVICE_SHORT_NAME }}${{ env.FILE_DATE }}
-        path: openwrt/bin/packages/aarch64_cortex-a53
+    # - name: 上传bin压缩目录
+    #   uses: actions/upload-artifact@main
+    #   if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+    #   with:
+    #     name: OpenWrt_bin${{ env.DEVICE_SHORT_NAME }}${{ env.FILE_DATE }}
+    #     path: openwrt/bin/packages/aarch64_cortex-a53
 
-    - name: 整理编译好的固件
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages && mkdir packages
-        find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
-        find -name "*kernel.bin*" | xargs -i mv -f {} packages
-        find -name "*rootfs*" | xargs -i mv -f {} packages
-        find -name "*.manifest*" | xargs -i mv -f {} packages
-        find -name "*vmlinuz*" | xargs -i mv -f {} packages
-        find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        rm -rf packages
-        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "{status}={success}" >> $GITHUB_OUTPUT
+    # - name: 整理编译好的固件
+    #   id: organize
+    #   if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+    #   run: |
+    #     cd openwrt/bin/targets/*/*
+    #     rm -rf packages && mkdir packages
+    #     find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
+    #     find -name "*kernel.bin*" | xargs -i mv -f {} packages
+    #     find -name "*rootfs*" | xargs -i mv -f {} packages
+    #     find -name "*.manifest*" | xargs -i mv -f {} packages
+    #     find -name "*vmlinuz*" | xargs -i mv -f {} packages
+    #     find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
+    #     rm -rf packages
+    #     (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
+    #     echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+    #     echo "{status}={success}" >> $GITHUB_OUTPUT
 
-    - name: 上传固件到github action
-      uses: actions/upload-artifact@main
-      if: ${{env.STATE.compile_status}} == 'success' && !cancelled()
-      with:
-        name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE}}
+    # - name: 上传固件到github action
+    #   uses: actions/upload-artifact@main
+    #   if: ${{env.STATE.compile_status}} == 'success' && !cancelled()
+    #   with:
+    #     name: ${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{ env.DEVICE_SHORT_NAME }}-${{ env.FILE_DATE }}
+    #     path: ${{ env.FIRMWARE}}
 
-    - name: 创建release标签
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
-        echo "{tag.status}={success}" >> $GITHUB_OUTPUT
+    # - name: 创建release标签
+    #   id: tag
+    #   if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+    #   run: |
+    #     echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+    #     echo "{tag.status}={success}" >> $GITHUB_OUTPUT
 
-    - name: 发布至release
-      uses: softprops/action-gh-release@v1
-      if: env.UPLOAD_RELEASE == 'true' && ${{env.STATE.tag_status}} == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      with:
-        name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
-        tag_name: ${{env.release_tag}}
-        body_path: release.md
-        files: |
-          ${{ env.FIRMWARE }}/*
+    # - name: 发布至release
+    #   uses: softprops/action-gh-release@v1
+    #   if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    #   with:
+    #     name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
+    #     tag_name: ${{env.release_tag}}
+    #     body_path: release.md
+    #     files: |
+    #       ${{ env.FIRMWARE }}/*
 
-    - name: 查看目录
-      if: |
-      run: ls -al openwrt/bin/targets/*/* || true
+    # - name: 查看目录
+    #   if: |
+    #   run: ls -al openwrt/bin/targets/*/* || true
 
-    - name: 删除旧的Releases
-      uses: JAM2199562/delete-older-releases@v0.2.0
-      if: env.CLEANUP_WORKDIR == 'true' && !cancelled()
-      with:
-        keep_latest: 15
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    # - name: 删除旧的Releases
+    #   uses: JAM2199562/delete-older-releases@v0.2.0
+    #   if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+    #   with:
+    #     keep_latest: 99
+    #     delete_tags: true
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
-    - name: 清理 workflow runs
-      uses: Mattraks/delete-workflow-runs@v2
-      with:
-        retain_days: 1
-        keep_minimum_runs: 3
+    # - name: 清理 workflow runs
+    #   uses: Mattraks/delete-workflow-runs@v2
+    #   with:
+    #     retain_days: 0
+    #     keep_minimum_runs: 0
+    #   if: true
