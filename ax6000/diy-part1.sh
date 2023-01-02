@@ -8,6 +8,9 @@
 # Blog: https://p3terx.com
 #=============================================================
 
+# 解决ucl编译失败问题
+sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
+
 # 增加luci-app-openclash
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-openclash package/luci-app-openclash
 
