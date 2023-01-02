@@ -76,7 +76,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 自定义软件源(DIY_P1)
@@ -88,7 +88,6 @@ jobs:
 
     - name: 更新编译配置(DIY_P2)
       run: |
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
         chmod +x $DIY_P2_SH
