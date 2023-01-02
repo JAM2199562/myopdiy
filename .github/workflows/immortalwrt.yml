@@ -83,6 +83,13 @@ jobs:
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
+
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
+
     - name: 自定义软件源(DIY_P1)
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
@@ -103,12 +110,6 @@ jobs:
         cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         make defconfig
-
-    - name: 下载插件
-      run: cd openwrt && ./scripts/feeds update -a
-
-    - name: 读取插件
-      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 下载软件包
       id: package
