@@ -8,6 +8,9 @@
 # Blog: https://p3terx.com
 #=============================================================
 
+# 增加luci-app-openclash
+svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-openclash package/luci-app-openclash
+
 # 增加luci-app-mosdns
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/luci-app-mosdns
 sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config/mosdns
@@ -18,10 +21,10 @@ git clone https://github.com/sirpdboy/luci-app-ddns-go package/luci-app-ddns-go
 # 增加luci-app-lucky
 git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
 
-# 增加alist
+# 增加luci-app-alist
 rm -rf feeds/packages/lang/golang
 svn export https://github.com/sbwml/packages_lang_golang/branches/19.x feeds/packages/lang/golang
 git clone https://github.com/sbwml/luci-app-alist.git package/luci-app-alist
 
-# 增加adguard
+# 增加luci-app-adguardhome
 git clone https://github.com/kiddin9/openwrt-adguardhome.git package/openwrt-adguardhome
