@@ -68,6 +68,10 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
+    - name: 自定义go路径
+      run: |
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+
     - name: 下载固件源码
       working-directory: /workdir
       run: |
@@ -75,40 +79,14 @@ jobs:
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
-##########################################################################
-    - name: 清理编译残存
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-          cd /workdir/${{env.SOURCE_ROOT}}
-          git checkout feeds.conf.default
-          git checkout include/image.mk
-          rm -rf dl/go-mod-cache/
-          rm -rf /workdir/dl/go-mod-cache/
-          rm -rf files
-          rm -rf .config
-          rm -rf bin/targets/*/*
-          rm -rf package/mosdns
-          rm -rf package/v2ray-geodata
-          rm -rf package/luci-app-ddns-go
-          git checkout package
-          sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-##########################################################################
-
-    - name: 下载插件
-      run: cd openwrt && ./scripts/feeds update -a
-
-    - name: 读取插件
-      run: cd openwrt && ./scripts/feeds install -a
-
-    - name: 自定义软件源
+    - name: 自定义软件源(DIY_P1)
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 更改固件设置(DIY_P1)
+    - name: 更新编译配置(DIY_P2)
       run: |
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
@@ -116,20 +94,19 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 更新编译配置(DIY_P2)
-      run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
-        cd openwrt
-        echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
-        make defconfig
-
     - name: 追加编译配置
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         make defconfig
 
-    - name: 下载安装包
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
+
+    - name: 下载软件包
       id: package
       run: |
         [ ! -e openwrt/dl/ ] && mkdir openwrt/dl

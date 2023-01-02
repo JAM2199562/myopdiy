@@ -69,6 +69,10 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
+    - name: 自定义go路径
+      run: |
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+
 ##########################################################################
     - name: 清理编译残存
       env:
@@ -89,17 +93,18 @@ jobs:
           rm -rf package/lucky
           rm -rf package/cloudflared
           rm -rf package/luci-app-alist
+          rm -rf package/openwrt-adguardhome/
           git checkout package
           # # ARM编译专用设置
           # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
+          echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 自定义软件源(DIY_P1)
@@ -119,7 +124,7 @@ jobs:
 
     - name: 追加编译配置
       run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
+        cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         cat defconfig/mt7986-ax6000.config >> .config
         make defconfig
@@ -134,8 +139,8 @@ jobs:
       id: package
       run: |
         [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
-        [ -e dl ] && cp dl/* openwrt/dl/
-        [ -e /workdir/dl ] && cp /workdir/dl/* openwrt/dl/
+        [ -e dl ] && cp -rf dl/* openwrt/dl/
+        [ -e /workdir/dl ] && cp -rf /workdir/dl/* openwrt/dl/
         cd openwrt
         make defconfig
         make download -j8
@@ -150,8 +155,6 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-        # grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        # [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME | head -n1)" >> $GITHUB_ENV
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
@@ -203,7 +206,7 @@ jobs:
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && ${{env.STATE.tag_status}} == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
@@ -219,9 +222,9 @@ jobs:
 
     - name: 删除旧的Releases
       uses: JAM2199562/delete-older-releases@v0.2.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: env.CLEANUP_WORKDIR == 'true' && !cancelled()
       with:
-        keep_latest: 30
+        keep_latest: 15
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -229,5 +232,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 0
-        keep_minimum_runs: 0
+        retain_days: 1
+        keep_minimum_runs: 3

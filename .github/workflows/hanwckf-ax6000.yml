@@ -68,18 +68,16 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
+    - name: 自定义go路径
+      run: |
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+
     - name: 下载固件源码
       working-directory: /workdir
       run: |
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
-
-    - name: 下载插件
-      run: cd openwrt && ./scripts/feeds update -a
-
-    - name: 读取插件
-      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 自定义软件源(DIY_P1)
       run: |
@@ -98,17 +96,23 @@ jobs:
 
     - name: 追加编译配置
       run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
+        cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         cat defconfig/mt7986-ax6000.config >> .config
         make defconfig
+
+    - name: 下载插件
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 读取插件
+      run: cd openwrt && ./scripts/feeds install -a
 
     - name: 下载软件包
       id: package
       run: |
         [ ! -e openwrt/dl/ ] && mkdir openwrt/dl
-        [ -e dl ] && cp dl/* openwrt/dl/
-        [ -e /workdir/dl ] && cp /workdir/dl/* openwrt/dl/
+        [ -e dl ] && cp -rf dl/* openwrt/dl/
+        [ -e /workdir/dl ] && cp -rf /workdir/dl/* openwrt/dl/
         cd openwrt
         make defconfig
         make download -j8
