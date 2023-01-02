@@ -1,0 +1,61 @@
+#=================================================
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+#=================================================
+
+name: 清理老的run和release
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: 0 3 * * *
+
+env:
+  REPO_AUTHOR: padavanonly
+  REPO_NAME: immortalwrtARM
+  REPO_URL: https://github.com/padavanonly/immortalwrtARM
+  REPO_BRANCH: mt7986
+  DEVICE_SHORT_NAME: ax6000
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: ax6000/ax6000.config
+  DIY_P1_SH: ax6000/diy-part1.sh
+  DIY_P2_SH: ax6000/diy-part2.sh
+  SSH_ACTIONS: false
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: 设定时区
+      uses: zcong1993/setup-timezone@master
+      with:
+        timezone: "Asia/Shanghai"
+
+    - name: 删除旧的Releases
+      uses: JAM2199562/delete-older-releases@v0.2.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 30
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+    - name: 清理 workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        retain_days: 0
+        keep_minimum_runs: 0
+      if: true

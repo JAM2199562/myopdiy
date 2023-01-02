@@ -73,7 +73,7 @@ jobs:
 
     - name: 自定义go路径
       run: |
-        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
 
     - name: 下载固件源码
@@ -97,7 +97,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 更新编译配置(DIY_P2)
+    - name: 自定义源代码(DIY_P2)
       run: |
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
@@ -105,11 +105,9 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 追加编译配置
+    - name: 生成编译配置
       run: |
-        cat $CONFIG_FILE >> openwrt/.config
-        cd openwrt
-        make defconfig
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
 
     - name: 下载软件包
       id: package

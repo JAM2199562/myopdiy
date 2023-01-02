@@ -17,7 +17,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 23 * * *
+    - cron: 0 3 * * *
   push:
     branches: [ main ]
 
@@ -37,6 +37,7 @@ env:
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
   CLEANUP_WORKDIR: true
+
 
 jobs:
   build:
@@ -71,7 +72,7 @@ jobs:
 
     - name: 自定义go路径
       run: |
-        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
 ##########################################################################
     - name: 清理编译残存
@@ -86,7 +87,7 @@ jobs:
           rm -rf /workdir/dl/go-mod-cache/
           rm -rf files
           rm -rf .config
-          rm -rf bin/targets/*/*
+          rm -rf  bin/targets/mediatek/mt7986/*.bin
           rm -rf package/mosdns
           rm -rf package/v2ray-geodata
           rm -rf package/luci-app-ddns-go
@@ -97,14 +98,14 @@ jobs:
           git checkout package
           # # ARM编译专用设置
           # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
+          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
+        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 自定义软件源(DIY_P1)
@@ -114,7 +115,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 更新编译配置(DIY_P2)
+    - name: 自定义源代码(DIY_P2)
       run: |
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
@@ -122,12 +123,19 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 追加编译配置
+    - name: 生成编译配置
       run: |
-        cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
         cat defconfig/mt7986-ax6000.config >> .config
+        cd $GITHUB_WORKSPACE
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
+        cat .config
         make defconfig
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: false
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
@@ -142,11 +150,18 @@ jobs:
         [ -e dl ] && cp -rf dl/* openwrt/dl/
         [ -e /workdir/dl ] && cp -rf /workdir/dl/* openwrt/dl/
         cd openwrt
-        make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: false
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: false
 
     - name: 开始编译固件
       id: compile
@@ -206,7 +221,7 @@ jobs:
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: env.UPLOAD_RELEASE == 'true' && ${{env.STATE.tag_status}} == 'success' && !cancelled()
+      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
@@ -222,9 +237,9 @@ jobs:
 
     - name: 删除旧的Releases
       uses: JAM2199562/delete-older-releases@v0.2.0
-      if: env.CLEANUP_WORKDIR == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 15
+        keep_latest: 99
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -232,5 +247,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 1
-        keep_minimum_runs: 3
+        retain_days: 3
+        keep_minimum_runs: 10

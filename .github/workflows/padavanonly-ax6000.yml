@@ -70,7 +70,7 @@ jobs:
 
     - name: 自定义go路径
       run: |
-        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-arm64.tar.gz | tar -zxC /workdir/ || true
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
     - name: 下载固件源码
       working-directory: /workdir
@@ -86,7 +86,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 更新编译配置(DIY_P2)
+    - name: 自定义源代码(DIY_P2)
       run: |
         [ -e files ] && mv files openwrt/files
         chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
@@ -94,11 +94,19 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 追加编译配置
+    - name: 生成编译配置
       run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> openwrt/.config
         cd openwrt
+        cat ax6000.config >> .config
+        cd $GITHUB_WORKSPACE
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
+        cat .config
         make defconfig
+
+    - name: SSH链接管理
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: false
 
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
