@@ -105,10 +105,6 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 生成编译配置
-      run: |
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
-
     - name: 下载软件包
       id: package
       run: |
@@ -121,6 +117,10 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
       if: true
+
+    - name: 生成编译配置
+      run: |
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
 
     - name: 开始编译固件
       id: compile
