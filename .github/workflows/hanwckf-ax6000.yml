@@ -94,16 +94,6 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 生成编译配置
-      run: |
-        cd openwrt
-        cat defconfig/mt7986-ax6000.config >> .config
-        cd $GITHUB_WORKSPACE
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
-        cd openwrt
-        cat .config
-        make defconfig
-
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
       if: false
@@ -113,6 +103,16 @@ jobs:
 
     - name: 读取插件
       run: cd openwrt && ./scripts/feeds install -a
+
+    - name: 生成编译配置
+      run: |
+        cd openwrt
+        cat defconfig/mt7986-ax6000.config >> .config
+        cd $GITHUB_WORKSPACE
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
+        cat .config
+        make defconfig
 
     - name: 下载软件包
       id: package
