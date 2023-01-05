@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -97,8 +97,6 @@ jobs:
           rm -rf package/openwrt-adguardhome/
           git checkout package
           # # ARM编译专用设置
-          # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
