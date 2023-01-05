@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -31,12 +31,14 @@ env:
   CONFIG_FILE: ax6000/ax6000.config
   DIY_P1_SH: ax6000/diy-part1.sh
   DIY_P2_SH: ax6000/diy-part2.sh
+  DIY_P3_SH: ax6000/diy-part3.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  CLEANUP_WORKDIR: true
+  NEED_CLEANUP: true
+  NEED_CLONE: false
 
 
 jobs:
@@ -78,7 +80,7 @@ jobs:
     - name: 清理编译残存
       env:
         DEBIAN_FRONTEND: noninteractive
-      if: env.CLEANUP_WORKDIR == 'true'
+      if: env.NEED_CLEANUP == 'true'
       run: |
           cd /workdir/${{env.SOURCE_ROOT}}
           git checkout feeds.conf.default
@@ -96,17 +98,16 @@ jobs:
           rm -rf package/luci-app-alist
           rm -rf package/openwrt-adguardhome/
           git checkout package
-          # # ARM编译专用设置
-          # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
+          ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 ##########################################################################
 
     - name: 下载固件源码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+      if: env.NEED_CLONE == 'true'
 
     - name: 自定义软件源(DIY_P1)
       run: |
@@ -142,6 +143,7 @@ jobs:
         cd openwrt
         cat .config
         make defconfig
+        cat .config
 
     - name: 下载软件包
       id: package
@@ -155,13 +157,11 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
       if: true
 
-    - name: SSH链接管理
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: false
-
-    - name: SSH链接管理
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: false
+    - name: 为alist自定义go package(DIY_P3)
+      run: |
+        chmod +x $DIY_P3_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P3_SH
 
     - name: 开始编译固件
       id: compile
