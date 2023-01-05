@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -36,7 +36,7 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  CLEANUP_WORKDIR: true
+  CLEANUP_WORKDIR: false
 
 
 jobs:
@@ -97,15 +97,13 @@ jobs:
           rm -rf package/openwrt-adguardhome/
           git checkout package
           # # ARM编译专用设置
-          # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
       working-directory: /workdir
       run: |
         df -hT $PWD
-        # git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
     - name: 自定义软件源(DIY_P1)
@@ -142,6 +140,7 @@ jobs:
         cd openwrt
         cat .config
         make defconfig
+        cat .config
 
     - name: 下载软件包
       id: package
