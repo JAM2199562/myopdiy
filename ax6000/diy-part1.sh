@@ -16,7 +16,10 @@ sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/luci-app-ddns-go
 
 # 增加luci-app-lucky
-git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
+git clone https://github.com/sirpdboy/luci-app-lucky.git package/lucky
+cd package/lucky
+git checkout 2201a903125ef220cf6f85270bfd74c17cbd9b34
+cd $GITHUB_WORKSPACE/openwrt
 
 # 增加alist
 rm -rf feeds/packages/lang/golang
