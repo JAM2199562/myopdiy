@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REPO_AUTHOR: padavanonly
@@ -39,7 +39,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, ARM64]
+    runs-on: ubuntu-20.04
     steps:
     - name: 定义代码根路径
       run: |
@@ -106,9 +106,6 @@ jobs:
 
     - name: 生成编译配置
       run: |
-        cd openwrt
-        cat ax6000.config >> .config
-        cd $GITHUB_WORKSPACE
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
         cd openwrt
         cat .config
@@ -121,7 +118,6 @@ jobs:
         [ -e dl ] && cp -rf dl/* openwrt/dl/
         [ -e /workdir/dl ] && cp -rf /workdir/dl/* openwrt/dl/
         cd openwrt
-        make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
