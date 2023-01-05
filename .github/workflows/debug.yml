@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -97,8 +97,6 @@ jobs:
           rm -rf package/openwrt-adguardhome/
           git checkout package
           # # ARM编译专用设置
-          # sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
-          # echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/workdir/go"' >> .config
 ##########################################################################
 
     - name: 下载固件源码
@@ -142,6 +140,7 @@ jobs:
         cd openwrt
         cat .config
         make defconfig
+        cat .config
 
     - name: 下载软件包
       id: package
@@ -163,15 +162,15 @@ jobs:
       uses: P3TERX/ssh2actions@v1.0.0
       if: false
 
-    - name: 开始编译固件
-      id: compile
-      run: |
-        cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) ||make -j2 || make -j1 V=s
-        echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+    # - name: 开始编译固件
+    #   id: compile
+    #   run: |
+    #     cd openwrt
+    #     echo -e "$(nproc) thread compile"
+    #     make -j$(nproc) ||make -j2 || make -j1 V=s
+    #     echo "{compile_status}={success}" >> $GITHUB_OUTPUT
+    #     echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+    #     echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
     - name: 查看磁盘使用情况
       if: (!cancelled())
