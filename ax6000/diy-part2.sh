@@ -24,7 +24,8 @@ sed -i '/^            - ecs_auto/c\            # - ecs_auto' $mosdns_working_dir
 sed -i '/^            - ecs_global/c\            #- ecs_global' $mosdns_working_dir/config.yaml
 echo 'ECS:Off'
 
-sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config/mosdns
+# sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config/mosdns
 sed -i 's/file\: \".\/mosdns.log\"/file\: \"\/tmp\/mosdns.log\"/g' $mosdns_working_dir/config.yaml
 sed -i 's/0.0.0.0\:53\"/0.0.0.0\:5335\"/g' $mosdns_working_dir/config.yaml
+cp $mosdns_working_dir/config.yaml $mosdns_working_dir/def_config.yaml
 sed -i 's/mosdns service/\/etc\/init.d\/mosdns/g' $mosdns_working_dir/restart.service
