@@ -35,7 +35,7 @@ env:
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: true
+  UPLOAD_RELEASE: false
   TZ: Asia/Shanghai
   NEED_CLEANUP: true
   NEED_CLONE: false
@@ -95,8 +95,10 @@ jobs:
           rm -rf package/luci-app-ddns-go
           rm -rf package/lucky
           rm -rf package/cloudflared
+          rm -rf package/luci-app-mosdns
           rm -rf package/luci-app-alist
           rm -rf package/openwrt-adguardhome/
+          rm -rf package/z_*
           git checkout package
           ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 ##########################################################################
@@ -157,7 +159,7 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
       if: true
 
-    - name: 为alist自定义go package(DIY_P3)
+    - name: 针对特定软件的自定义设置(DIY_P3)
       run: |
         chmod +x $DIY_P3_SH
         cd openwrt
@@ -168,7 +170,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j$(nproc) ||make -j2 || make -j1 V=s
+        # make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "{compile_status}={success}" >> $GITHUB_OUTPUT
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
@@ -188,22 +190,22 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_SHORT_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin/packages/aarch64_cortex-a53
 
-    - name: 整理编译好的固件
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages && mkdir packages
-        find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
-        find -name "*kernel.bin*" | xargs -i mv -f {} packages
-        find -name "*rootfs*" | xargs -i mv -f {} packages
-        find -name "*.manifest*" | xargs -i mv -f {} packages
-        find -name "*vmlinuz*" | xargs -i mv -f {} packages
-        find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-        rm -rf packages
-        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "{status}={success}" >> $GITHUB_OUTPUT
+    # - name: 整理编译好的固件
+    #   id: organize
+    #   if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+    #   run: |
+    #     cd openwrt/bin/targets/*/*
+    #     rm -rf packages && mkdir packages
+    #     find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
+    #     find -name "*kernel.bin*" | xargs -i mv -f {} packages
+    #     find -name "*rootfs*" | xargs -i mv -f {} packages
+    #     find -name "*.manifest*" | xargs -i mv -f {} packages
+    #     find -name "*vmlinuz*" | xargs -i mv -f {} packages
+    #     find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
+    #     rm -rf packages
+    #     (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
+    #     echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+    #     echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传固件到github action
       uses: actions/upload-artifact@main
@@ -221,7 +223,7 @@ jobs:
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
