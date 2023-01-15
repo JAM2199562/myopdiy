@@ -14,11 +14,8 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package
 # 增加luci-app-ddns-go
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
 
-# # 增加luci-app-lucky
-# git clone https://github.com/sirpdboy/luci-app-lucky.git package/z_lucky
-# cd package/lucky
-# git checkout 2201a903125ef220cf6f85270bfd74c17cbd9b34
-# cd $GITHUB_WORKSPACE/openwrt
+# 增加luci-app-lucky
+git clone https://github.com/gdy666/luci-app-lucky.git package/z_lucky
 
 # 增加alist
 ls -al feeds/packages/lang/golang
