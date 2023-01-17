@@ -31,6 +31,7 @@ env:
   CONFIG_FILE: 360t7/360t7.config
   DIY_P1_SH: 360t7/diy-part1.sh
   DIY_P2_SH: 360t7/diy-part2.sh
+  DIY_P3_SH: ax6000/diy-part3.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true

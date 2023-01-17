@@ -31,6 +31,7 @@ env:
   CONFIG_FILE: ax6000/ax6000.config
   DIY_P1_SH: ax6000/diy-part1.sh
   DIY_P2_SH: ax6000/diy-part2.sh
+  DIY_P3_SH: ax6000/diy-part3.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -123,7 +124,7 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
       if: true
 
-    - name: 为alist自定义go package(DIY_P3)
+    - name: 针对特定软件的自定义设置(DIY_P3)
       run: |
         chmod +x $DIY_P3_SH
         cd openwrt

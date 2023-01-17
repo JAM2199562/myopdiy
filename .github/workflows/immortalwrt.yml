@@ -31,6 +31,7 @@ env:
   CONFIG_FILE: immortalwrt/x86/immortalwrt-x86.config
   DIY_P1_SH: immortalwrt/x86/diy-immortalwrt-part1.sh
   DIY_P2_SH: immortalwrt/x86/diy-immortalwrt-part2.sh
+  DIY_P3_SH: immortalwrt/x86/diy-immortalwrt-part3.sh
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -121,6 +122,12 @@ jobs:
     - name: 生成编译配置
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+
+    - name: 针对特定软件的自定义设置(DIY_P3)
+      run: |
+        chmod +x $DIY_P3_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P3_SH
 
     - name: 开始编译固件
       id: compile
