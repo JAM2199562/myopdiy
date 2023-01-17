@@ -118,6 +118,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        make defconfig
 
     - name: 针对特定软件的自定义设置(DIY_P3)
       run: |

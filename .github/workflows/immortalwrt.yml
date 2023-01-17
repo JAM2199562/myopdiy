@@ -43,7 +43,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, ARM64]
     steps:
     - name: 定义代码根路径
       run: |
@@ -122,6 +122,8 @@ jobs:
     - name: 生成编译配置
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
+        make defconfig
 
     - name: 针对特定软件的自定义设置(DIY_P3)
       run: |
