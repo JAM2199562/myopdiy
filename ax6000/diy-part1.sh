@@ -12,17 +12,17 @@
 sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
 
 # 增加luci-app-openclash
-svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-openclash package/luci-app-openclash
+svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-openclash z_package/luci-app-openclash
 
 # 增加luci-app-mosdns
-svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/luci-app-mosdns
+svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/z_luci-app-mosdns
 sed -i 's/def_config.yaml/config.yaml/g' package/luci-app-mosdns/root/etc/config/mosdns
 
 # 增加luci-app-ddns-go
-git clone https://github.com/sirpdboy/luci-app-ddns-go package/luci-app-ddns-go
+git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
 
 # 增加luci-app-lucky
-git clone https://github.com/sirpdboy/luci-app-lucky.git package/lucky
+git clone https://github.com/sirpdboy/luci-app-lucky.git package/z_lucky
 cd package/lucky
 git checkout 2201a903125ef220cf6f85270bfd74c17cbd9b34
 cd $GITHUB_WORKSPACE/openwrt
@@ -30,7 +30,7 @@ cd $GITHUB_WORKSPACE/openwrt
 # # 增加luci-app-alist
 rm -rf feeds/packages/lang/golang
 svn export https://github.com/sbwml/packages_lang_golang/branches/19.x feeds/packages/lang/golang
-git clone https://github.com/sbwml/luci-app-alist.git package/luci-app-alist
+git clone https://github.com/sbwml/luci-app-alist.git package/z_luci-app-alist
 
 # 增加luci-app-adguardhome
-git clone https://github.com/kiddin9/openwrt-adguardhome.git package/openwrt-adguardhome
+git clone https://github.com/kiddin9/openwrt-adguardhome.git package/z_openwrt-adguardhome
