@@ -9,10 +9,13 @@
 #=============================================================
 
 # 增加luci-app-mosdns
-find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f
-find ./ | grep Makefile | grep mosdns | xargs rm -f
-git clone https://github.com/sbwml/luci-app-mosdns package/z_mosdns
-git clone https://github.com/sbwml/v2ray-geodata package/z_v2ray-geodata
+# find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f
+# find ./ | grep Makefile | grep mosdns | xargs rm -f
+# git clone https://github.com/sbwml/luci-app-mosdns package/z_mosdns
+# git clone https://github.com/sbwml/v2ray-geodata package/z_v2ray-geodata
+
+# 增加luci-app-mosdns
+svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/z_luci-app-mosdns
 
 # 增加luci-app-ddns-go
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
