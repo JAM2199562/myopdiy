@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 23 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ hanwckf ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -217,5 +217,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 3
-        keep_minimum_runs: 10
+        retain_days: 99
+        keep_minimum_runs: 99

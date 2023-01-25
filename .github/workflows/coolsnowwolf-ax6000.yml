@@ -18,8 +18,8 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * *
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ coolsnowwolf ]
 
 env:
   REPO_AUTHOR: coolsnowwolf
@@ -40,7 +40,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, cloud]
     steps:
     - name: 定义代码根路径
       run: |
@@ -118,6 +118,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
         make defconfig
 
     - name: 针对特定软件的自定义设置(DIY_P3)
