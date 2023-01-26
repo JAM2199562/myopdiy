@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: 清理老的run和release
+name: 99. 清理老的run和release
 
 on:
   repository_dispatch:
@@ -17,7 +17,7 @@ on:
         required: false
         default: 'false'
   # schedule:
-  #   - cron: 0 3 * * *
+  #   - cron: 0 3 * * 2
 
 env:
   REPO_AUTHOR: padavanonly
@@ -48,7 +48,7 @@ jobs:
       uses: JAM2199562/delete-older-releases@v0.2.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 30
+        keep_latest: 20
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -57,5 +57,5 @@ jobs:
       uses: Mattraks/delete-workflow-runs@v2
       with:
         retain_days: 0
-        keep_minimum_runs: 10
+        keep_minimum_runs: 0
       if: true

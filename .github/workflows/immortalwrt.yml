@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: immortalwrt-x86-每日构建
+name: 4. immortalwrt-x86-每周构建
 
 on:
   repository_dispatch:
@@ -17,7 +17,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 3 */3 * *
+    - cron: 0 3 */7 * *
   push:
     branches: [ immortalwrt ]
 
@@ -39,11 +39,12 @@ env:
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  USER_TOOLCHAIN: false
+  NEED_CLEANUP: false
+  NEED_CLONE: true
 
 jobs:
   build:
-    runs-on: [self-hosted, ARM64]
+    runs-on: ubuntu-20.04
     steps:
     - name: 定义代码根路径
       run: |
@@ -79,6 +80,7 @@ jobs:
 
     - name: 下载固件源码
       working-directory: /workdir
+      if: env.NEED_CLONE == 'true'
       run: |
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true

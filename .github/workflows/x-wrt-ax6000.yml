@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: x-wrt-ax6000-每日构建
+name: 6. x-wrt-ax6000-每周构建
 
 on:
   repository_dispatch:
@@ -17,7 +17,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 3 * * *
+    - cron: 0 3 * * 1
   push:
     branches: [ x-wrt ]
 
@@ -37,6 +37,8 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
+  NEED_CLEANUP: false
+  NEED_CLONE: true
 
 jobs:
   build:

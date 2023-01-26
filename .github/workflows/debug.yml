@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: hanwckf-ax6000-调试
+name: 0. 调试-hanwckf
 
 on:
   repository_dispatch:
@@ -17,7 +17,7 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 3 * * *
+    - cron: 0 3 * * 1
   # push:
   #   branches: [ main ]
 
@@ -35,15 +35,15 @@ env:
   SSH_ACTIONS: false
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: false
+  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
   NEED_CLEANUP: true
-  NEED_CLONE: false
+  NEED_CLONE: true
 
 
 jobs:
   build:
-    runs-on: [self-hosted, ARM64]
+    runs-on: [self-hosted]
     steps:
     - name: 定义代码根路径
       run: |
@@ -76,12 +76,21 @@ jobs:
       run: |
         [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
+    - name: 下载固件源码
+      working-directory: /workdir
+      if: env.NEED_CLONE == 'true'
+      run: |
+        df -hT $PWD
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+
 ##########################################################################
     - name: 清理编译残存
       env:
         DEBIAN_FRONTEND: noninteractive
       if: env.NEED_CLEANUP == 'true'
       run: |
+          sudo chown $USER:$GROUPS /workdir
           cd /workdir/${{env.SOURCE_ROOT}}
           git checkout feeds.conf.default
           git checkout include/image.mk
@@ -100,16 +109,8 @@ jobs:
           rm -rf package/openwrt-adguardhome/
           rm -rf package/z_*
           git checkout package
-          ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 ##########################################################################
 
-    - name: 下载固件源码
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
-      if: env.NEED_CLONE == 'true'
 
     - name: 自定义软件源(DIY_P1)
       run: |
@@ -145,7 +146,6 @@ jobs:
         cd openwrt
         cat .config
         make defconfig
-        cat .config
 
     - name: 下载软件包
       id: package
@@ -170,7 +170,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        # make -j$(nproc) ||make -j2 || make -j1 V=s
+        make -j$(nproc) ||make -j2 || make -j1 V=s
         echo "{compile_status}={success}" >> $GITHUB_OUTPUT
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
@@ -190,22 +190,22 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_SHORT_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin/packages/aarch64_cortex-a53
 
-    # - name: 整理编译好的固件
-    #   id: organize
-    #   if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-    #   run: |
-    #     cd openwrt/bin/targets/*/*
-    #     rm -rf packages && mkdir packages
-    #     find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
-    #     find -name "*kernel.bin*" | xargs -i mv -f {} packages
-    #     find -name "*rootfs*" | xargs -i mv -f {} packages
-    #     find -name "*.manifest*" | xargs -i mv -f {} packages
-    #     find -name "*vmlinuz*" | xargs -i mv -f {} packages
-    #     find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
-    #     rm -rf packages
-    #     (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
-    #     echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-    #     echo "{status}={success}" >> $GITHUB_OUTPUT
+    - name: 整理编译好的固件
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages && mkdir packages
+        find -name "*esxi-flat.vmdk*" | xargs -i mv -f {} packages
+        find -name "*kernel.bin*" | xargs -i mv -f {} packages
+        find -name "*rootfs*" | xargs -i mv -f {} packages
+        find -name "*.manifest*" | xargs -i mv -f {} packages
+        find -name "*vmlinuz*" | xargs -i mv -f {} packages
+        find -name "*esxi.vmdk*" | xargs -i mv -f {} packages
+        rm -rf packages
+        (for var in *.bin; do mv "$var" "${var%.bin}-$(cat version.buildinfo | cut -d '-' -f2).bin"; done) ||true
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: 上传固件到github action
       uses: actions/upload-artifact@main
@@ -223,7 +223,7 @@ jobs:
 
     - name: 发布至release
       uses: softprops/action-gh-release@v1
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: ${{env.STATE.tag_status}} == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
@@ -249,5 +249,5 @@ jobs:
     - name: 清理 workflow runs
       uses: Mattraks/delete-workflow-runs@v2
       with:
-        retain_days: 3
-        keep_minimum_runs: 10
+        retain_days: 99
+        keep_minimum_runs: 99
