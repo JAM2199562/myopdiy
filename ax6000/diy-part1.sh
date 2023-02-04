@@ -11,6 +11,9 @@
 # 解决ucl编译失败问题
 sed -i 's/configure/configure\ --build=alpha/g' ./tools/ucl/Makefile
 
+# 修复usign导致编译报错
+sed -i '/usign/d'  package/Makefile
+
 # 增加luci-app-openclash
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-openclash z_package/luci-app-openclash
 
