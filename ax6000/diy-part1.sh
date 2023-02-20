@@ -9,7 +9,11 @@
 #=============================================================
 
 # 增加luci-app-mosdns
-svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns package/z_luci-app-mosdns
+rm -rf ./feeds/packages/net/mosdns
+git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx
+git clone  https://github.com/QiuSimons/openwrt-mos package/openwrt-mos \
+&& cd package/openwrt-mos && git checkout 40b669b564e3876cd02aeb148fccd576647394cc \
+&& mv -n {*mosdns,v2ray-geodata} ../ && cd ../.. && rm -rf package/openwrt-mos
 
 # 增加luci-app-ddns-go
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go

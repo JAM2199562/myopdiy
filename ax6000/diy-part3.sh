@@ -8,6 +8,7 @@ chmod a+x files/usr/bin/lucky
 ## 将mosdns降级到4.5.3以兼容easymosdns
 sed -i '/^PKG_HASH/cPKG_HASH:=2a13b1b1d862731cf946a8ceaa99523a0eb0eaae56045dd31207b61a5a6d47ae' package/feeds/packages/mosdns/Makefile
 sed -i '/^PKG_VERSION/cPKG_VERSION:=4.5.3' package/feeds/packages/mosdns/Makefile
+rm -rf ./feeds/packages/net/mosdns
 ## 安装easymosdns
 [ ! -e easymosdns.tar.gz ] && wget https://mirror.apad.pro/dns/easymosdns.tar.gz
 tar xzf easymosdns.tar.gz
