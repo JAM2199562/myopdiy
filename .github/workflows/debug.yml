@@ -18,12 +18,12 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * 1
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
-  REPO_AUTHOR: hanwckf
-  REPO_NAME: immortalwrt-mt798x
+  REPO_AUTHOR: immortalwrt
+  REPO_NAME: combine
   REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
   REPO_BRANCH: openwrt-21.02
   DEVICE_SHORT_NAME: ax6000
@@ -45,6 +45,33 @@ jobs:
   build:
     runs-on: [self-hosted]
     steps:
+##########################################################################
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      if: env.NEED_CLEANUP == 'true'
+      run: |
+          sudo chown $USER:$GROUPS /workdir
+          cd /workdir/${{env.SOURCE_ROOT}}
+          git checkout feeds.conf.default || true
+          git checkout include/image.mk || true
+          rm -rf dl/go-mod-cache/
+          rm -rf /workdir/dl/go-mod-cache/
+          rm -rf files
+          rm -rf .config
+          rm -rf  bin/targets/mediatek/mt7986/*.bin
+          rm -rf package/mosdns
+          rm -rf package/v2ray-geodata
+          rm -rf package/luci-app-ddns-go
+          rm -rf package/lucky
+          rm -rf package/cloudflared
+          rm -rf package/luci-app-mosdns
+          rm -rf package/luci-app-alist
+          rm -rf package/openwrt-adguardhome/
+          rm -rf package/z_*
+          git checkout package || true
+##########################################################################
+
     - name: 定义代码根路径
       run: |
         echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
@@ -76,40 +103,61 @@ jobs:
       run: |
         [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
-    - name: 下载固件源码
-      working-directory: /workdir
-      if: env.NEED_CLONE == 'true'
-      run: |
-        df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
 
-##########################################################################
-    - name: 清理编译残存
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      if: env.NEED_CLEANUP == 'true'
+    - name: Clone source code
+      working-directory: /workdir
       run: |
-          sudo chown $USER:$GROUPS /workdir
-          cd /workdir/${{env.SOURCE_ROOT}}
-          git checkout feeds.conf.default
-          git checkout include/image.mk
-          rm -rf dl/go-mod-cache/
-          rm -rf /workdir/dl/go-mod-cache/
-          rm -rf files
-          rm -rf .config
-          rm -rf  bin/targets/mediatek/mt7986/*.bin
-          rm -rf package/mosdns
-          rm -rf package/v2ray-geodata
-          rm -rf package/luci-app-ddns-go
-          rm -rf package/lucky
-          rm -rf package/cloudflared
-          rm -rf package/luci-app-mosdns
-          rm -rf package/luci-app-alist
-          rm -rf package/openwrt-adguardhome/
-          rm -rf package/z_*
-          git checkout package
-##########################################################################
+        rm -rf /workdir/$SOURCE_ROOT
+        df -hT $PWD
+        git clone --depth 2 $REPO_URL -b  $REPO_BRANCH $SOURCE_ROOT || true
+        ln -sf /workdir/$SOURCE_ROOT $GITHUB_WORKSPACE/openwrt
+        cd /workdir/$SOURCE_ROOT
+        COMMIT2ID=`git log -2 --pretty=format:"%H" |sed -n '2p'`
+        sed -i 's/REBOOT=.*/REBOOT='"${COMMIT2ID}"'/g' scripts/getver.sh
+        cd ..
+
+    - name: Clone 3rd code
+      run: |
+        cd openwrt
+
+        mkdir dl || true
+        git clone --depth 1 https://github.com/hanwckf/immortalwrt-mt798x.git hanwckfop
+
+        mv hanwckfop/dl/* dl
+        # 下面这句先不执行，因为我还并没有patch
+        # find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
+
+        mv hanwckfop/package/boot/uboot-envtools/files/mediatek package/boot/uboot-envtools/files/mediatek
+
+        rm -rf package/network/services/hostapd
+        mv hanwckfop/package/network/services/hostapd package/network/services/hostapd
+        rm -rf package/network/utils/iw
+        mv hanwckfop/package/network/utils/iw package/network/utils/iw
+        rm -rf package/network/utils/iwinfo
+        mv hanwckfop/package/network/utils/iwinfo package/network/utils/iwinfo
+        rm -rf package/network/utils/wireless-tools
+        mv hanwckfop/package/network/utils/wireless-tools package/network/utils/wireless-tools
+
+        mv hanwckfop/package/mtk package/mtk
+
+        rm -rf target/linux/generic
+        mv hanwckfop/target/linux/generic target/linux/generic
+        rm -rf target/linux/generic/backport-5.4/702-Revert-net-dsa-b53-Fix-valid-setting-for-MDB-entries.patch
+        rm -rf target/linux/generic/backport-5.4/703-v5.5-0001-net-dsa-b53-Add-support-for-MDB.patch
+        rm -rf target/linux/generic/backport-5.4/707-v5.7-0016-net-dsa-b53-Fix-valid-setting-for-MDB-entries.patch
+
+        rm -rf target/linux/mediatek
+        mv hanwckfop/target/linux/mediatek target/linux/mediatek
+        #new iw version compile need update libnl-tiny
+        mv hanwckfop/package/libs/libnl-tiny/Makefile package/libs/libnl-tiny/Makefile
+
+        wget https://github.com/immortalwrt/immortalwrt/raw/openwrt-21.02/package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch -q --no-check-certificate -O package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch
+
+        rm -rf package/network/config/firewall
+        mv hanwckfop/package/network/config/firewall package/network/config/firewall
+        mv hanwckfop/package/network/utils/fullconenat package/network/utils/fullconenat
+        mkdir -p package/network/utils/iptables/patches
+        mv hanwckfop/package/network/utils/iptables/patches/900-bcm-fullconenat.patch package/network/utils/iptables/patches/900-bcm-fullconenat.patch
 
 
     - name: 自定义软件源(DIY_P1)
