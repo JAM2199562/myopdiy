@@ -173,7 +173,7 @@ jobs:
         git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn || true
         #sed -i '/include $(INCLUDE_DIR)\/package.mk/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
         #fix make menuconfig error
-        sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
+        #sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
         #v2ray 反向连接回家里用
         #git clone --depth 1 -b luci2 https://github.com/BI7PRK/luci-app-v2ray.git package/mycustom/luci-app-v2ray || true
         git clone --depth=1 https://github.com/fw876/helloworld.git package/mycustom/helloworld || true
