@@ -37,7 +37,7 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  NEED_CLEANUP: false
+  NEED_CLEANUP: true
   NEED_CLONE: true
 
 jobs:
