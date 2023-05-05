@@ -1,12 +1,12 @@
 #=================================================
 # https://github.com/P3TERX/Actions-OpenWrt
 # Description: Build OpenWrt using GitHub Actions
-# Lisence: MIT
+# License: MIT
 # Author: P3TERX
 # Blog: https://p3terx.com
 #=================================================
 
-name: immortalwrt-x86-每日构建
+name: 4. immortalwrt-x86-每周构建
 
 on:
   repository_dispatch:
@@ -17,9 +17,9 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 0 3 */3 * *
-  # push:
-  #   branches: [ main ]
+    - cron: 0 3 */7 * *
+  push:
+    branches: [ immortalwrt ]
 
 env:
   REPO_AUTHOR: immortalwrt
@@ -39,7 +39,8 @@ env:
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  USER_TOOLCHAIN: false
+  NEED_CLEANUP: false
+  NEED_CLONE: true
 
 jobs:
   build:
@@ -79,6 +80,7 @@ jobs:
 
     - name: 下载固件源码
       working-directory: /workdir
+      if: env.NEED_CLONE == 'true'
       run: |
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
@@ -122,6 +124,8 @@ jobs:
     - name: 生成编译配置
       run: |
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
+        make defconfig
 
     - name: 针对特定软件的自定义设置(DIY_P3)
       run: |

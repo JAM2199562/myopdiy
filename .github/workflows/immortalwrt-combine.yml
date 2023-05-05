@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: 0. 调试-hanwckf
+name: 4.1. immortalwrt+mtk原厂驱动
 
 on:
   repository_dispatch:
@@ -18,13 +18,13 @@ on:
         default: 'false'
   schedule:
     - cron: 0 3 * * 1
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: immortalwrt
   REPO_NAME: combine
-  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: openwrt-21.02
   DEVICE_SHORT_NAME: ax6000
   FEEDS_CONF: feeds.conf.default
@@ -37,7 +37,7 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  NEED_CLEANUP: true
+  NEED_CLEANUP: false
   NEED_CLONE: true
 
 
@@ -45,6 +45,9 @@ jobs:
   build:
     runs-on: [self-hosted]
     steps:
+    - name: 定义代码根路径
+      run: |
+        echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
 ##########################################################################
     - name: 清理编译残存
       env:
@@ -53,6 +56,9 @@ jobs:
       run: |
           sudo chown $USER:$GROUPS /workdir
           cd /workdir/${{env.SOURCE_ROOT}}
+          rm -rf hanwckfop/
+          rm -rf package/mtk/mtk
+          rm -rf package/network/utils/fullconenat/fullconenat
           git checkout feeds.conf.default || true
           git checkout include/image.mk || true
           rm -rf dl/go-mod-cache/
@@ -60,12 +66,13 @@ jobs:
           rm -rf files
           rm -rf .config
           rm -rf  bin/targets/mediatek/mt7986/*.bin
-          rm -rf package/mosdns
           rm -rf package/v2ray-geodata
           rm -rf package/luci-app-ddns-go
           rm -rf package/lucky
           rm -rf package/cloudflared
+          rm -rf package/mosdns
           rm -rf package/luci-app-mosdns
+          rm -rf package/mycustom/openwrt-mos/mosdns
           rm -rf package/luci-app-alist
           rm -rf package/openwrt-adguardhome/
           rm -rf package/z_*
@@ -104,10 +111,9 @@ jobs:
         [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
 
-    - name: Clone source code
+    - name: 克隆源代码
       working-directory: /workdir
       run: |
-        rm -rf /workdir/$SOURCE_ROOT
         df -hT $PWD
         git clone --depth 2 $REPO_URL -b  $REPO_BRANCH $SOURCE_ROOT || true
         ln -sf /workdir/$SOURCE_ROOT $GITHUB_WORKSPACE/openwrt
@@ -116,13 +122,13 @@ jobs:
         sed -i 's/REBOOT=.*/REBOOT='"${COMMIT2ID}"'/g' scripts/getver.sh
         cd ..
 
-    - name: Clone 3rd code
+    - name: 克隆第三方代码
       run: |
         cd openwrt
 
         mkdir dl || true
-        git clone --depth 1 https://github.com/hanwckf/immortalwrt-mt798x.git hanwckfop
-        mv hanwckfop/dl/* dl
+        git clone --depth 1 https://github.com/hanwckf/immortalwrt-mt798x.git hanwckfop || true
+        mv hanwckfop/dl/* dl || true
         mv hanwckfop/package/boot/uboot-envtools/files/mediatek package/boot/uboot-envtools/files/mediatek
         rm -rf package/network/services/hostapd
         mv hanwckfop/package/network/services/hostapd package/network/services/hostapd
@@ -152,7 +158,62 @@ jobs:
         mv hanwckfop/package/network/utils/fullconenat package/network/utils/fullconenat
         mkdir -p package/network/utils/iptables/patches
         mv hanwckfop/package/network/utils/iptables/patches/900-bcm-fullconenat.patch package/network/utils/iptables/patches/900-bcm-fullconenat.patch
-
+        sed -i "s/add_list system.ntp.server='0.*/add_list system.ntp.server='ntp1.aliyun.com'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='1.*/add_list system.ntp.server='time1.cloud.tencent.com'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='2.*/add_list system.ntp.server='time.ustc.edu.cn'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='3.*/add_list system.ntp.server='ntp2.aliyun.com'"/ package/base-files/files/bin/config_generate
+        sed -i "s/set system\.\@system\[-1\].timezone='UTC'/set system\.\@system\[-1\]\.timezone='CST-8'\n\t\tset system\.\@system\[-1\]\.zonename='Asia\/Shanghai'/" package/base-files/files/bin/config_generate
+        mkdir -p package/mycustom
+        #xray 科学用，luci-app-xray防火墙规则没开关，可能会导致无线中继功能异常
+        git clone --depth 1 -b master https://github.com/yichya/luci-app-xray package/mycustom/luci-app-xray || true
+        sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
+        #sed -i 's/flush_dnsmasq$//g' package/mycustom/luci-app-xray/root/etc/init.d/xray
+        #sed -i 's/setup_dnsmasq$//g' package/mycustom/luci-app-xray/root/etc/init.d/xray
+        #sed -i '/service dnsmasq restart/d' package/mycustom/luci-app-xray/root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3
+        git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn || true
+        #sed -i '/include $(INCLUDE_DIR)\/package.mk/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
+        #fix make menuconfig error
+        #sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
+        #v2ray 反向连接回家里用
+        #git clone --depth 1 -b luci2 https://github.com/BI7PRK/luci-app-v2ray.git package/mycustom/luci-app-v2ray || true
+        git clone --depth=1 https://github.com/fw876/helloworld.git package/mycustom/helloworld || true
+        git clone --depth=1 -b v4_EOL https://github.com/QiuSimons/openwrt-mos.git package/mycustom/openwrt-mos || true
+        #sed -i 's@geoip.dat@geoip.dat\n\twget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile
+        #sed -i 's@geoip_cn.txt.$(GEOIP_VER)@geoip_cn.txt.$(GEOIP_VER)\nwget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile || true
+        git clone --depth=1 https://github.com/muziling/openwrt-package.git package/mycustom/muzipkg || true
+        mkdir -p package/mycustom/muzipkg/my-files/files
+        wget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > package/mycustom/muzipkg/my-files/files/geoip_cn.txt
+        git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/mycustom/luci-theme-argon || true
+        git clone --depth 1 -b master https://github.com/garypang13/luci-theme-edge package/mycustom/luci-theme-edge || true
+        git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx || true
+        #for shadowsocks, impletement encrypt algorithm
+        mv hanwckfop/package/libs/openssl/Config.in package/libs/openssl/Config.in
+        rm -rf package/libs/mbedtls
+        mv hanwckfop/package/libs/mbedtls package/libs/mbedtls
+        rm -rf package/libs/ustream-ssl
+        mv hanwckfop/package/libs/ustream-ssl package/libs/ustream-ssl
+        rm -rf package/libs/wolfssl
+        mv hanwckfop/package/libs/wolfssl package/libs/wolfssl
+        #update version
+        rm -rf package/libs/libmnl
+        mv hanwckfop/package/libs/libmnl package/libs/libmnl
+        rm -rf package/libs/libnfnetlink
+        mv hanwckfop/package/libs/libnfnetlink package/libs/libnfnetlink
+        ./scripts/feeds update -a
+        wget https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/lean/ddns-scripts_aliyun/update_aliyun_com.sh -q --no-check-certificate -O feeds/packages/net/ddns-scripts/files/usr/lib/ddns/update_aliyun_com.sh
+        chmod +x feeds/packages/net/ddns-scripts/files/usr/lib/ddns/update_aliyun_com.sh
+        echo -e '{\n\t"name": "aliyun.com",\n\t"ipv4": {\n\t\t"url": "update_aliyun_com.sh"\n\t}\n}'  >feeds/packages/net/ddns-scripts/files/usr/share/ddns/default/aliyun.com.json
+        sed -i 's|$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh|$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh $(1)/usr/lib/ddns\n\t$(INSTALL_BIN) ./files/usr/lib/ddns/update_aliyun_com.sh|' feeds/packages/net/ddns-scripts/Makefile
+        #sed -i "/tristate /a\\\t   default \$(shell if [ '\$(lang)' == 'zh_Hans' ]\; then echo y\; else echo n\; fi)" feeds/luci/luci.mk
+        sed -i "s/option lang .*/option lang 'zh_cn' /" feeds/luci/modules/luci-base/root/etc/config/luci
+        sed -i 's|mediaurlbase.*$|mediaurlbase /luci-static/argon|g' feeds/luci/modules/luci-base/root/etc/config/luci
+        ./scripts/feeds install -a
+        #grep -v '^#' hanwckfop/defconfig/mt7981-ax3000.config > .config
+        cp hanwckfop/defconfig/mt7986-ax6000.config .config
+        echo CONFIG_LUCI_LANG_zh_Hans=y >> .config
+        #echo CONFIG_PACKAGE_luci-i18n-xray-zh-cn=y >> .config
+        wget https://raw.githubusercontent.com/muziling/openwrt-autocompile/master/360t7/Makefile -O target/linux/mediatek/Makefile
+        rm -rf package/base-files/files/sbin/wifi
     - name: 自定义软件源(DIY_P1)
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
@@ -181,7 +242,7 @@ jobs:
     - name: 生成编译配置
       run: |
         cd openwrt
-        cat defconfig/mt7986-ax6000.config >> .config
+        cat defconfig/mt7986-ax6000.config >> .config || true
         cd $GITHUB_WORKSPACE
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
         cd openwrt
@@ -270,7 +331,7 @@ jobs:
       with:
         name: 「${{env.FILE_DATE}}」-「${{env.REPO_AUTHOR}}-${{env.REPO_NAME}}-${{env.REPO_BRANCH}}-${{env.DEVICE_SHORT_NAME}}」
         tag_name: ${{env.release_tag}}
-        body_path: release.md
+        body_path: release-combined.md
         files: |
           ${{ env.FIRMWARE }}/*
 
