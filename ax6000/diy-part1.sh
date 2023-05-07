@@ -10,7 +10,10 @@
 
 # 增加luci-app-mosdns
 rm -rf ./feeds/packages/net/mosdns
-git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx
+git clone https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx
+cd package/mycustom/openwrt-upx
+git checkout -b 2c2ee0d696ea6084bee893a2861a7ed0729728ed
+cd ../../..
 git clone  https://github.com/QiuSimons/openwrt-mos package/openwrt-mos \
 && cd package/openwrt-mos && git checkout 40b669b564e3876cd02aeb148fccd576647394cc \
 && mv -n {*mosdns,v2ray-geodata} ../ && cd ../.. && rm -rf package/openwrt-mos
