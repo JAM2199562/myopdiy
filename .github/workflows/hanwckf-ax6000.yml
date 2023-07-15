@@ -42,7 +42,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, home]
+    runs-on: ubuntu-20.04
     steps:
 
     - name: 定义代码根路径
