@@ -19,7 +19,7 @@ on:
   schedule:
     - cron: 0 3 * * 1
   push:
-    branches: [ hanwckf ]
+    branches: [ main ]
 
 env:
   REPO_AUTHOR: hanwckf
@@ -42,11 +42,40 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     steps:
+
     - name: 定义代码根路径
       run: |
         echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
+
+##########################################################################
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      if: env.NEED_CLEANUP == 'true'
+      run: |
+          sudo chown $USER:$GROUPS /workdir
+          cd /workdir/${{env.SOURCE_ROOT}}
+          git checkout feeds.conf.default || true
+          git checkout include/image.mk || true
+          rm -rf dl/go-mod-cache/
+          rm -rf /workdir/dl/go-mod-cache/
+          rm -rf files
+          rm -rf .config
+          rm -rf  bin/targets/mediatek/mt7986/*.bin
+          rm -rf package/mosdns
+          rm -rf package/v2ray-geodata
+          rm -rf package/luci-app-ddns-go
+          rm -rf package/lucky
+          rm -rf package/cloudflared
+          rm -rf package/luci-app-mosdns
+          rm -rf package/luci-app-alist
+          rm -rf package/openwrt-adguardhome/
+          rm -rf package/z_*
+          rm -rf package/mycustom/openwrt-upx
+          git checkout package || true
+##########################################################################
 
     - name: 设定时区
       uses: zcong1993/setup-timezone@master
@@ -81,10 +110,11 @@ jobs:
       run: |
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+        ln -sf /workdir/${{env.SOURCE_ROOT}} /workdir/openwrt
 
     - name: 自定义软件源(DIY_P1)
       run: |
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
