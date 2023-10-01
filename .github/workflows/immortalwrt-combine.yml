@@ -176,8 +176,8 @@ jobs:
         #sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
         #v2ray 反向连接回家里用
         #git clone --depth 1 -b luci2 https://github.com/BI7PRK/luci-app-v2ray.git package/mycustom/luci-app-v2ray || true
-        git clone --depth=1 https://github.com/fw876/helloworld.git package/mycustom/helloworld || true
-        git clone --depth=1 -b v4_EOL https://github.com/QiuSimons/openwrt-mos.git package/mycustom/openwrt-mos || true
+        # git clone --depth=1 https://github.com/fw876/helloworld.git package/mycustom/helloworld || true
+        # git clone --depth=1 -b v4_EOL https://github.com/QiuSimons/openwrt-mos.git package/mycustom/openwrt-mos || true
         #sed -i 's@geoip.dat@geoip.dat\n\twget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile
         #sed -i 's@geoip_cn.txt.$(GEOIP_VER)@geoip_cn.txt.$(GEOIP_VER)\nwget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile || true
         git clone --depth=1 https://github.com/muziling/openwrt-package.git package/mycustom/muzipkg || true
