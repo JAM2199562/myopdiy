@@ -37,13 +37,13 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  NEED_CLEANUP: false
+  NEED_CLEANUP: true
   NEED_CLONE: true
 
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
     steps:
     - name: 定义代码根路径
       run: |
@@ -166,11 +166,11 @@ jobs:
         mkdir -p package/mycustom
         #xray 科学用，luci-app-xray防火墙规则没开关，可能会导致无线中继功能异常
         git clone --depth 1 -b master https://github.com/yichya/luci-app-xray package/mycustom/luci-app-xray || true
-        sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
+        #sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
         #sed -i 's/flush_dnsmasq$//g' package/mycustom/luci-app-xray/root/etc/init.d/xray
         #sed -i 's/setup_dnsmasq$//g' package/mycustom/luci-app-xray/root/etc/init.d/xray
         #sed -i '/service dnsmasq restart/d' package/mycustom/luci-app-xray/root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3
-        git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn || true
+        #git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn || true
         #sed -i '/include $(INCLUDE_DIR)\/package.mk/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
         #fix make menuconfig error
         #sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
