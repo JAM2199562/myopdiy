@@ -24,7 +24,6 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        #docker rmi `docker images -q`
         sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
         sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* adoptopenjdk* mysql* php* mongodb* dotnet* moby* snapd* || true
         sudo -E apt-get update
@@ -41,7 +40,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone --depth 2 https://github.com/openwrt/openwrt.git -b openwrt-21.02 openwrt
+        git clone --depth 2 https://github.com/openwrt/openwrt.git -b openwrt-21.02 openwrt || true
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         cd openwrt
         COMMIT2ID=`git log -2 --pretty=format:"%H" |sed -n '2p'`
@@ -53,16 +52,16 @@ jobs:
         mv 360t7/*.patch openwrt
         cd openwrt
         
-        mkdir dl
+        mkdir dl || true
         git clone --depth 1 https://github.com/hanwckf/immortalwrt-mt798x.git hanwckfop
         cd hanwckfop
-        wget https://github.com/redfrog999/immortalwrt-mt798x/commit/d797a500da5caac197c940958bbdb3f5c2440eaa.patch -q --no-check-certificate -O hnat_nf_hook.patch
-        wget https://github.com/hanwckf/immortalwrt-mt798x/commit/94e7f6047cf498dbea96a45551043265bfdf1709.patch -q --no-check-certificate -O mtk_wifi_vif_cfg.patch
-        find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
+        # wget https://github.com/redfrog999/immortalwrt-mt798x/commit/d797a500da5caac197c940958bbdb3f5c2440eaa.patch -q --no-check-certificate -O hnat_nf_hook.patch
+        # wget https://github.com/hanwckf/immortalwrt-mt798x/commit/94e7f6047cf498dbea96a45551043265bfdf1709.patch -q --no-check-certificate -O mtk_wifi_vif_cfg.patch
+        # find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
         cd ..
         mv hanwckfop/dl/* dl
         
-        find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
+        # find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
         
         mv hanwckfop/package/boot/uboot-envtools/files/mediatek package/boot/uboot-envtools/files/mediatek
         
@@ -108,14 +107,14 @@ jobs:
         mv hanwckfop/package/emortal/autocore package/mycustom/autocore
         
         #xray 科学用，luci-app-xray防火墙规则没开关，可能会导致无线中继功能异常
-        git clone --depth 1 -b master https://github.com/yichya/luci-app-xray package/mycustom/luci-app-xray
-        sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
-        sed -i 's/flush_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
-        sed -i 's/setup_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
-        sed -i 's|procd_append_param command -confdir|procd_append_param command -c|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
-        sed -i 's|procd_append_param command /var/etc/xray|procd_append_param command /var/etc/xray/config_custom.json|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
-        sed -i 's/service dnsmasq restart/atest=btest/g' package/mycustom/luci-app-xray/fw3/root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3
-        sed -i 's|option wan_bp_list '.*|option wan_bp_list '/etc/mosdns/rule/geoip_cn.txt'|g' package/mycustom/luci-app-xray/fw3/root/etc/config/xray_fw3
+        # git clone --depth 1 -b master https://github.com/yichya/luci-app-xray package/mycustom/luci-app-xray
+        # sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
+        # sed -i 's/flush_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        # sed -i 's/setup_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        # sed -i 's|procd_append_param command -confdir|procd_append_param command -c|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        # sed -i 's|procd_append_param command /var/etc/xray|procd_append_param command /var/etc/xray/config_custom.json|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        # sed -i 's/service dnsmasq restart/atest=btest/g' package/mycustom/luci-app-xray/fw3/root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3
+        # sed -i 's|option wan_bp_list '.*|option wan_bp_list '/etc/mosdns/rule/geoip_cn.txt'|g' package/mycustom/luci-app-xray/fw3/root/etc/config/xray_fw3
         
         #git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn
         #sed -i '/include $(INCLUDE_DIR)\/package.mk/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
