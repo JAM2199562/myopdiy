@@ -1,0 +1,250 @@
+# https://github.com/muziling/openwrt-autocompile/blob/master/.github/workflows/build-360t7.yml
+name: AX6000-CI
+
+on:
+  workflow_dispatch:
+
+env:
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  TZ: Asia/Shanghai
+
+jobs:
+  build_openwrt:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        ref: master
+        fetch-depth: 0
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        docker rmi `docker images -q`
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+        sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* adoptopenjdk* mysql* php* mongodb* dotnet* moby* snapd* || true
+        sudo -E apt-get update
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler antlr3 gperf swig
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+        sudo -E swapoff -a
+
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone --depth 2 https://github.com/openwrt/openwrt.git -b openwrt-21.02 openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        cd openwrt
+        COMMIT2ID=`git log -2 --pretty=format:"%H" |sed -n '2p'`
+        sed -i 's/REBOOT=.*/REBOOT='"${COMMIT2ID}"'/g' scripts/getver.sh
+        cd ..
+
+    - name: Clone 3rd code
+      run: |
+        mv 360t7/*.patch openwrt
+        cd openwrt
+        
+        mkdir dl
+        git clone --depth 1 https://github.com/hanwckf/immortalwrt-mt798x.git hanwckfop
+        cd hanwckfop
+        wget https://github.com/redfrog999/immortalwrt-mt798x/commit/d797a500da5caac197c940958bbdb3f5c2440eaa.patch -q --no-check-certificate -O hnat_nf_hook.patch
+        wget https://github.com/hanwckf/immortalwrt-mt798x/commit/94e7f6047cf498dbea96a45551043265bfdf1709.patch -q --no-check-certificate -O mtk_wifi_vif_cfg.patch
+        find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
+        cd ..
+        mv hanwckfop/dl/* dl
+        
+        find . -maxdepth 1 -type f -iname '*.patch' -print0|xargs -n1 -0 patch -p 1 -i
+        
+        mv hanwckfop/package/boot/uboot-envtools/files/mediatek package/boot/uboot-envtools/files/mediatek
+        
+        rm -rf package/network/services/hostapd
+        mv hanwckfop/package/network/services/hostapd package/network/services/hostapd
+        rm -rf package/network/utils/iw
+        mv hanwckfop/package/network/utils/iw package/network/utils/iw
+        rm -rf package/network/utils/iwinfo
+        mv hanwckfop/package/network/utils/iwinfo package/network/utils/iwinfo
+        rm -rf package/network/utils/wireless-tools
+        mv hanwckfop/package/network/utils/wireless-tools package/network/utils/wireless-tools
+        
+        #svn co https://github.com/padavanonly/immortalwrtARM/branches/mt7986/package/mtk package/mtk
+        #mv package/mtk/applications/luci-app-mtk/po/zh-cn package/mtk/applications/luci-app-mtk/po/zh_Hans
+        #sed -i "s/mtkhqos_util/mtkhnat_util/" hanwckfop/defconfig/mt7986-ax6000.config
+        mv hanwckfop/package/mtk package/mtk
+        
+        rm -rf target/linux/generic
+        mv hanwckfop/target/linux/generic target/linux/generic
+        
+        rm -rf target/linux/mediatek
+        mv hanwckfop/target/linux/mediatek target/linux/mediatek
+
+        #new iw version compile need update libnl-tiny
+        mv hanwckfop/package/libs/libnl-tiny/Makefile package/libs/libnl-tiny/Makefile
+        
+        wget https://github.com/immortalwrt/immortalwrt/raw/openwrt-21.02/package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch -q --no-check-certificate -O package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch
+        
+        rm -rf package/network/config/firewall
+        mv hanwckfop/package/network/config/firewall package/network/config/firewall
+        mv hanwckfop/package/network/utils/fullconenat package/network/utils/fullconenat
+        mkdir -p package/network/utils/iptables/patches
+        mv hanwckfop/package/network/utils/iptables/patches/900-bcm-fullconenat.patch package/network/utils/iptables/patches/900-bcm-fullconenat.patch
+        
+        sed -i "s/add_list system.ntp.server='0.*/add_list system.ntp.server='ntp1.aliyun.com'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='1.*/add_list system.ntp.server='time1.cloud.tencent.com'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='2.*/add_list system.ntp.server='time.ustc.edu.cn'"/ package/base-files/files/bin/config_generate
+        sed -i "s/add_list system.ntp.server='3.*/add_list system.ntp.server='ntp2.aliyun.com'"/ package/base-files/files/bin/config_generate
+        
+        sed -i "s/set system\.\@system\[-1\].timezone='UTC'/set system\.\@system\[-1\]\.timezone='CST-8'\n\t\tset system\.\@system\[-1\]\.zonename='Asia\/Shanghai'/" package/base-files/files/bin/config_generate
+        
+        mkdir -p package/mycustom
+        mv hanwckfop/package/emortal/autocore package/mycustom/autocore
+        
+        #xray 科学用，luci-app-xray防火墙规则没开关，可能会导致无线中继功能异常
+        git clone --depth 1 -b master https://github.com/yichya/luci-app-xray package/mycustom/luci-app-xray
+        sed -i 's/create tp_spec_dst_bp hash:net hashsize 64.*$/create tp_spec_dst_bp hash:net hashsize 64 maxelem 1000000/g' package/mycustom/luci-app-xray/fw3/root/usr/share/xray/gen_ipset_rules.lua
+        sed -i 's/flush_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        sed -i 's/setup_dnsmasq$//g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        sed -i 's|procd_append_param command -confdir|procd_append_param command -c|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        sed -i 's|procd_append_param command /var/etc/xray|procd_append_param command /var/etc/xray/config_custom.json|g' package/mycustom/luci-app-xray/fw3/root/etc/init.d/xray_fw3
+        sed -i 's/service dnsmasq restart/atest=btest/g' package/mycustom/luci-app-xray/fw3/root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3
+        sed -i 's|option wan_bp_list '.*|option wan_bp_list '/etc/mosdns/rule/geoip_cn.txt'|g' package/mycustom/luci-app-xray/fw3/root/etc/config/xray_fw3
+        
+        #git clone --depth 1 https://github.com/Mitsuhaxy/luci-i18n-xray-zh-cn.git package/mycustom/luci-i18n-xray-zh-cn
+        #sed -i '/include $(INCLUDE_DIR)\/package.mk/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
+        #fix make menuconfig error
+        #sed -i '/DEPENDS/d' package/mycustom/luci-i18n-xray-zh-cn/Makefile
+
+        #v2ray 反向连接回家里用
+        #git clone --depth 1 -b luci2 https://github.com/BI7PRK/luci-app-v2ray.git package/mycustom/luci-app-v2ray
+
+        git clone --depth=1 https://github.com/fw876/helloworld.git package/mycustom/helloworld
+        git clone --depth=1 https://github.com/QiuSimons/openwrt-mos.git package/mycustom/openwrt-mos
+        #sed -i 's@geoip.dat@geoip.dat\n\twget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile
+        #sed -i 's@geoip_cn.txt.$(GEOIP_VER)@geoip_cn.txt.$(GEOIP_VER)\nwget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > $(1)/etc/mosdns/geoip_cn.txt@g' package/mycustom/openwrt-mos/v2ray-geodata/Makefile
+        git clone --depth=1 https://github.com/muziling/openwrt-package.git package/mycustom/muzipkg
+        mkdir -p package/mycustom/muzipkg/my-files/files
+        wget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > package/mycustom/muzipkg/my-files/files/geoip_cn.txt
+        
+        #git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/mycustom/luci-theme-argon
+        git clone --depth 1 -b master https://github.com/garypang13/luci-theme-edge package/mycustom/luci-theme-edge
+
+        git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx
+        
+        
+        
+        #for shadowsocks, impletement encrypt algorithm
+        mv hanwckfop/package/libs/openssl/Config.in package/libs/openssl/Config.in
+        rm -rf package/libs/mbedtls
+        mv hanwckfop/package/libs/mbedtls package/libs/mbedtls
+        rm -rf package/libs/ustream-ssl
+        mv hanwckfop/package/libs/ustream-ssl package/libs/ustream-ssl
+        rm -rf package/libs/wolfssl
+        mv hanwckfop/package/libs/wolfssl package/libs/wolfssl
+        
+        #update version
+        rm -rf package/libs/libmnl
+        mv hanwckfop/package/libs/libmnl package/libs/libmnl
+        rm -rf package/libs/libnfnetlink
+        mv hanwckfop/package/libs/libnfnetlink package/libs/libnfnetlink
+        
+        mv hanwckfop/package/utils/mhz package/mycustom/muzipkg
+        
+        ./scripts/feeds update -a
+        
+        wget https://github.com/immortalwrt/luci/raw/openwrt-21.02/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js -q --no-check-certificate -O feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
+        wget https://github.com/immortalwrt/luci/raw/openwrt-21.02/modules/luci-base/root/usr/libexec/rpcd/luci -q --no-check-certificate -O feeds/luci/modules/luci-base/root/usr/libexec/rpcd/luci
+        wget https://github.com/immortalwrt/luci/raw/openwrt-21.02/modules/luci-base/htdocs/luci-static/resources/icons/wifi_big.png -q --no-check-certificate -O feeds/luci/modules/luci-base/htdocs/luci-static/resources/icons/wifi_big.png
+        
+        
+        wget https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/lean/ddns-scripts_aliyun/update_aliyun_com.sh -q --no-check-certificate -O feeds/packages/net/ddns-scripts/files/usr/lib/ddns/update_aliyun_com.sh
+        chmod +x feeds/packages/net/ddns-scripts/files/usr/lib/ddns/update_aliyun_com.sh
+        echo -e '{\n\t"name": "aliyun.com",\n\t"ipv4": {\n\t\t"url": "update_aliyun_com.sh"\n\t}\n}'  >feeds/packages/net/ddns-scripts/files/usr/share/ddns/default/aliyun.com.json
+        sed -i 's|$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh|$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh $(1)/usr/lib/ddns\n\t$(INSTALL_BIN) ./files/usr/lib/ddns/update_aliyun_com.sh|' feeds/packages/net/ddns-scripts/Makefile
+
+        
+        
+        sed -i "s/option lang .*/option lang 'zh_cn' /g" feeds/luci/modules/luci-base/root/etc/config/luci
+        sed -i 's|mediaurlbase.*$|mediaurlbase /luci-static/edge|g' feeds/luci/modules/luci-base/root/etc/config/luci
+
+        rm -rf feeds/packages/lang/golang
+        svn co https://github.com/openwrt/packages/trunk/lang/golang  feeds/packages/lang/golang
+        
+        svn co https://github.com/openwrt/packages/trunk/net/natmap  package/mycustom/natmap
+        svn co https://github.com/openwrt/luci/trunk/applications/luci-app-natmap  package/mycustom/luci-app-natmap
+        sed -i 's|include.*luci.mk|include $(TOPDIR)/feeds/luci/luci.mk|g' package/mycustom/luci-app-natmap/Makefile
+        
+        ./scripts/feeds install -a
+        
+        cp hanwckfop/defconfig/mt7986-ax6000.config .config
+        echo CONFIG_LUCI_LANG_zh_Hans=y >> .config
+        
+    - name: Download package
+      run: |
+        [ -e 360t7/Makefile ] && mv -f 360t7/Makefile openwrt/target/linux/mediatek/Makefile
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec rm -f {} \;
+
+    # - name: 自定义软件源(DIY_P1)
+    #   run: |
+    #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+    #     chmod +x $DIY_P1_SH
+    #     cd openwrt
+    #     $GITHUB_WORKSPACE/$DIY_P1_SH
+
+    # - name: 自定义源代码(DIY_P2)
+    #   run: |
+    #     [ -e files ] && mv files openwrt/files
+    #     chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
+    #     chmod +x $DIY_P2_SH
+    #     cd openwrt
+    #     $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    # - name: 针对特定软件的自定义设置(DIY_P3)
+    #   run: |
+    #     chmod +x $DIY_P3_SH
+    #     cd openwrt
+    #     $GITHUB_WORKSPACE/$DIY_P3_SH
+
+    # - name: Compile the firmware
+    #   id: compile
+    #   run: |
+    #     echo -e "$(nproc) thread compile"
+    #     make -j$(nproc) V=sc || make -j1 V=s || make -j1
+    #     echo "::set-output name=status::success"
+    #     grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+    #     [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+    #     echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    # - name: Upload bin directory
+    #   uses: actions/upload-artifact@master
+    #   if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+    #   with:
+    #     name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+    #     path: openwrt/bin
+
+    # - name: Organize files
+    #   id: organize
+    #   if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+    #   run: |
+    #     cd openwrt/bin/targets/*/*
+    #     rm -rf packages
+    #     echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+    #     echo "::set-output name=status::success"
+    #     cp ../../../../.config .
+
+    # - name: Upload firmware directory
+    #   uses: actions/upload-artifact@v3
+    #   if: steps.organize.outputs.status == 'success' && !cancelled()
+    #   with:
+    #     name: OpenWrt_firmware
+    #     path: ${{ env.FIRMWARE }}
