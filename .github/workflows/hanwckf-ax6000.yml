@@ -42,7 +42,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
     steps:
 
     - name: 定义代码根路径
@@ -50,31 +50,31 @@ jobs:
         echo "SOURCE_ROOT=${{env.REPO_AUTHOR}}_${{env.REPO_NAME}}" >> $GITHUB_ENV
 
 ##########################################################################
-    # - name: 清理编译残存
-    #   env:
-    #     DEBIAN_FRONTEND: noninteractive
-    #   if: env.NEED_CLEANUP == 'true'
-    #   run: |
-    #       sudo chown $USER:$GROUPS /workdir
-    #       cd /workdir/${{env.SOURCE_ROOT}}
-    #       git checkout feeds.conf.default || true
-    #       git checkout include/image.mk || true
-    #       rm -rf dl/go-mod-cache/
-    #       rm -rf /workdir/dl/go-mod-cache/
-    #       rm -rf files
-    #       rm -rf .config
-    #       rm -rf  bin/targets/mediatek/mt7986/*.bin
-    #       rm -rf package/mosdns
-    #       rm -rf package/v2ray-geodata
-    #       rm -rf package/luci-app-ddns-go
-    #       rm -rf package/lucky
-    #       rm -rf package/cloudflared
-    #       rm -rf package/luci-app-mosdns
-    #       rm -rf package/luci-app-alist
-    #       rm -rf package/openwrt-adguardhome/
-    #       rm -rf package/z_*
-    #       rm -rf package/mycustom/openwrt-upx
-    #       git checkout package || true
+    - name: 清理编译残存
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      if: env.NEED_CLEANUP == 'true'
+      run: |
+          sudo chown $USER:$GROUPS /workdir
+          cd /workdir/${{env.SOURCE_ROOT}}
+          git checkout feeds.conf.default || true
+          git checkout include/image.mk || true
+          rm -rf dl/go-mod-cache/
+          rm -rf /workdir/dl/go-mod-cache/
+          rm -rf files
+          rm -rf .config
+          rm -rf  bin/targets/mediatek/mt7986/*.bin
+          rm -rf package/mosdns
+          rm -rf package/v2ray-geodata
+          rm -rf package/luci-app-ddns-go
+          rm -rf package/lucky
+          rm -rf package/cloudflared
+          rm -rf package/luci-app-mosdns
+          rm -rf package/luci-app-alist
+          rm -rf package/openwrt-adguardhome/
+          rm -rf package/z_*
+          rm -rf package/mycustom/openwrt-upx
+          git checkout package || true
 ##########################################################################
 
     - name: 设定时区
