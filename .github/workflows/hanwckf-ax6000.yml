@@ -54,6 +54,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       if: env.NEED_CLEANUP == 'true'
+      continue-on-error: true
       run: |
           sudo chown $USER:$GROUPS /workdir
           cd /workdir/${{env.SOURCE_ROOT}}
@@ -100,9 +101,9 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    # - name: 自定义go路径
-    #   run: |
-    #     [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
+    - name: 自定义go路径
+      run: |
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.13.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
     - name: 下载固件源码
       working-directory: /workdir
@@ -111,6 +112,7 @@ jobs:
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} /workdir/openwrt
+      continue-on-error: true
 
     - name: 自定义软件源(DIY_P1)
       run: |
@@ -118,6 +120,7 @@ jobs:
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
+        cp ../dl/* dl
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: 自定义源代码(DIY_P2)
