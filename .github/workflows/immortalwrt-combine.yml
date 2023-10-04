@@ -106,9 +106,9 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: 自定义go路径
-      run: |
-        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
+    # - name: 自定义go路径
+    #   run: |
+    #     [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.4.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
 
     - name: 克隆源代码
@@ -118,6 +118,7 @@ jobs:
         git clone --depth 2 $REPO_URL -b  $REPO_BRANCH $SOURCE_ROOT || true
         ln -sf /workdir/$SOURCE_ROOT $GITHUB_WORKSPACE/openwrt
         cd /workdir/$SOURCE_ROOT
+        cp -r ../dl/* dl || true
         COMMIT2ID=`git log -2 --pretty=format:"%H" |sed -n '2p'`
         sed -i 's/REBOOT=.*/REBOOT='"${COMMIT2ID}"'/g' scripts/getver.sh
         cd ..
@@ -185,7 +186,7 @@ jobs:
         wget -O- "https://github.com/misakaio/chnroutes2/raw/master/chnroutes.txt" | grep -v "#" > package/mycustom/muzipkg/my-files/files/geoip_cn.txt
         git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/mycustom/luci-theme-argon || true
         git clone --depth 1 -b master https://github.com/garypang13/luci-theme-edge package/mycustom/luci-theme-edge || true
-        git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx || true
+        # git clone --depth=1 https://github.com/kuoruan/openwrt-upx.git package/mycustom/openwrt-upx || true
         #for shadowsocks, impletement encrypt algorithm
         mv hanwckfop/package/libs/openssl/Config.in package/libs/openssl/Config.in
         rm -rf package/libs/mbedtls
