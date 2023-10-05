@@ -115,7 +115,7 @@ jobs:
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
       continue-on-error: true
 
-    # # - name: 自定义软件源(DIY_P1)
+    # # - name: 自定义源代码和包(DIY_P1)
     # #   run: |
     # #     ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
     # #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
@@ -124,7 +124,7 @@ jobs:
     # #     cp ../dl/* dl
     # #     $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    # # - name: 自定义源代码(DIY_P2)
+    # # - name: 自定义设置(DIY_P2)
     # #   run: |
     # #     [ -e files ] && mv files openwrt/files
     # #     chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
