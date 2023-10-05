@@ -57,6 +57,7 @@ jobs:
       continue-on-error: true
       run: |
           sudo chown $USER:$GROUPS /workdir
+          rm -rf /workdir/${{env.SOURCE_ROOT}}
           cd /workdir/${{env.SOURCE_ROOT}}
           git checkout feeds.conf.default || true
           git checkout include/image.mk || true
@@ -124,11 +125,11 @@ jobs:
     # #     cp ../dl/* dl
     # #     $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    # # - name: 自定义设置(DIY_P2)
-    # #   run: |
-    # #     chmod +x $DIY_P2_SH
-    # #     cd openwrt
-    # #     $GITHUB_WORKSPACE/$DIY_P2_SH
+    - name: 自定义设置(DIY_P2)
+      run: |
+        echo "当前路径是: $(pwd)"
+        chmod +x $DIY_P2_SH
+        $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
