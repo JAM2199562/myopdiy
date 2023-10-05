@@ -3,7 +3,7 @@
 # 针对特别软件的自定义设置
 ## 避免alist依赖的go在feeds操作时被覆盖掉
 rm -rf feeds/packages/lang/golang
-svn export https://github.com/sbwml/packages_lang_golang/branches/19.x feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 20.x feeds/packages/lang/golang
 chmod a+x files/usr/bin/lucky
 ## 将mosdns降级到4.5.3以兼容easymosdns
 sed -i '/^PKG_HASH/cPKG_HASH:=2a13b1b1d862731cf946a8ceaa99523a0eb0eaae56045dd31207b61a5a6d47ae' package/feeds/packages/mosdns/Makefile
