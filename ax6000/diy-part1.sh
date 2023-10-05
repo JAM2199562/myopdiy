@@ -32,3 +32,4 @@ git clone https://github.com/animegasan/luci-app-cloudflared.git package/z_luci-
 # 增加cloudflare 测速
 git clone https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest.git package/z_luci-app-cloudflarespeedtest
 git clone https://github.com/immortalwrt-collections/openwrt-cdnspeedtest.git package/z_openwrt-cdnspeedtest
+chmod a+x package/z_luci-app-cloudflarespeedtest/applications/luci-app-cloudflarespeedtest/root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh
