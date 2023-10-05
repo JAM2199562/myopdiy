@@ -103,7 +103,7 @@ jobs:
 
     - name: 自定义go路径
       run: |
-        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.19.13.linux-amd64.tar.gz | tar -zxC /workdir/ || true
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.20.8.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
     - name: 下载固件源码
       working-directory: /workdir
