@@ -126,8 +126,6 @@ jobs:
 
     # # - name: 自定义设置(DIY_P2)
     # #   run: |
-    # #     [ -e files ] && mv files openwrt/files
-    # #     chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
     # #     chmod +x $DIY_P2_SH
     # #     cd openwrt
     # #     $GITHUB_WORKSPACE/$DIY_P2_SH
