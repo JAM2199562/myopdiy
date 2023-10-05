@@ -121,12 +121,13 @@ jobs:
       run: |
         [ -e /workdir/dl ] && cp -r /workdir/dl /workdir/${{env.SOURCE_ROOT}}/dl
 
-    # # - name: 自定义源代码和包(DIY_P1)
-    # #   run: |
-    # #     ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
-    # #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-    # #     chmod +x $DIY_P1_SH
-    # #     $GITHUB_WORKSPACE/$DIY_P1_SH
+    - name: 自定义源代码和包(DIY_P1)
+      run: |
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: 自定义设置(DIY_P2)
       run: |
