@@ -112,24 +112,25 @@ jobs:
         df -hT $PWD
         git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
         ln -sf /workdir/${{env.SOURCE_ROOT}} /workdir/openwrt
+        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
       continue-on-error: true
 
-    - name: 自定义软件源(DIY_P1)
-      run: |
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
-        cd openwrt
-        cp ../dl/* dl
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+    # # - name: 自定义软件源(DIY_P1)
+    # #   run: |
+    # #     ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
+    # #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+    # #     chmod +x $DIY_P1_SH
+    # #     cd openwrt
+    # #     cp ../dl/* dl
+    # #     $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 自定义源代码(DIY_P2)
-      run: |
-        [ -e files ] && mv files openwrt/files
-        chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
-        chmod +x $DIY_P2_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+    # # - name: 自定义源代码(DIY_P2)
+    # #   run: |
+    # #     [ -e files ] && mv files openwrt/files
+    # #     chmod a+x openwrt/files/etc/init.d/disable-ipv6.sh
+    # #     chmod +x $DIY_P2_SH
+    # #     cd openwrt
+    # #     $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
