@@ -14,11 +14,9 @@
 # git checkout -b e5b33e219922f427a04372f5eb7b1bb0cc8db848
 # cd ../../..
 
-# 增加luci-app-mosdns
-rm -rf ./feeds/packages/net/mosdns
-git clone  https://github.com/QiuSimons/openwrt-mos package/openwrt-mos \
-&& cd package/openwrt-mos && git checkout 40b669b564e3876cd02aeb148fccd576647394cc \
-&& mv -n {*mosdns,v2ray-geodata} ../ && cd ../.. && rm -rf package/openwrt-mos
+# 增加luci-app-mosdns(2023.10.5 简化mosdns，不再使用4.5.3版本)
+
+git clone https://github.com/sbwml/luci-app-mosdns.git package/luci-app-mosdns \
 
 # 增加luci-app-ddns-go
 git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
