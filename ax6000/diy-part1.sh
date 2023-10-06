@@ -9,7 +9,7 @@
 # git checkout -b e5b33e219922f427a04372f5eb7b1bb0cc8db848
 # cd ../../..
 
-# # 增加alist(2023.10.6 不再编译alist，它依赖的go太高，会导致其他软件编译失败)
+# # 增加alist(2023.10.6 alist在源代码中自带了)
 # ls -al feeds/packages/lang/golang
 # git clone https://github.com/sbwml/luci-app-alist.git package/z_luci-app-alist
 
