@@ -197,6 +197,9 @@ jobs:
         echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> "feeds.conf.default"
         echo "src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git;main" >> "feeds.conf.default"
         ./scripts/feeds update -a && ./scripts/feeds install -a
+        cd $GITHUB_WORKSPACE
+        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
+        cd openwrt
         make defconfig
 
     - name: 再次编译固件
