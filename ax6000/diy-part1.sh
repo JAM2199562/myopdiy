@@ -26,8 +26,6 @@ git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-g
 # 增加luci-app-lucky
 git clone https://github.com/gdy666/luci-app-lucky.git package/z_luci-app-lucky
 
-# 增加luci-app-cloudflared
-git clone https://github.com/animegasan/luci-app-cloudflared.git package/z_luci-app-cloudflared
 
 # 增加cloudflare 测速
 git clone https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest.git package/z_luci-app-cloudflarespeedtest
