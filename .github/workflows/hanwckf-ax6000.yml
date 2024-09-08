@@ -58,7 +58,7 @@ jobs:
       continue-on-error: true
       run: |
           sudo chown $USER:$GROUPS /workdir
-          rm -rf /workdir/${{env.SOURCE_ROOT}}
+          # rm -rf /workdir/${{env.SOURCE_ROOT}}
           cd /workdir/${{env.SOURCE_ROOT}}
           git checkout feeds.conf.default || true
           git checkout include/image.mk || true
@@ -112,7 +112,7 @@ jobs:
       if: env.NEED_CLONE == 'true'
       run: |
         df -hT $PWD
-        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}}
+        git clone -b $REPO_BRANCH --single-branch --depth 1 $REPO_URL  /workdir/${{env.SOURCE_ROOT}} || true
         ln -sf /workdir/${{env.SOURCE_ROOT}} /workdir/openwrt
         ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
       continue-on-error: true
