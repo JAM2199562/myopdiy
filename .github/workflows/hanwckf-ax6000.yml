@@ -120,7 +120,7 @@ jobs:
     - name: 拷贝缓存的软件包
       working-directory: /workdir
       run: |
-        [ -e /workdir/dl ] && cp -r /workdir/dl /workdir/${{env.SOURCE_ROOT}}/dl|| true
+        [ -e /workdir/dl ] && cp -r /workdir/dl /workdir/${{env.SOURCE_ROOT}}/|| true
 
     - name: 自定义源代码和包(DIY_P1)
       run: |
