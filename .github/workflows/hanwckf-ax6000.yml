@@ -61,21 +61,21 @@ jobs:
           cd /workdir/${{env.SOURCE_ROOT}}
           git checkout feeds.conf.default || true
           git checkout include/image.mk || true
-          rm -rf dl/go-mod-cache/
-          rm -rf /workdir/dl/go-mod-cache/
-          rm -rf files
-          rm -rf .config
-          rm -rf  bin/targets/mediatek/mt7986/*.bin
-          rm -rf package/mosdns
-          rm -rf package/v2ray-geodata
-          rm -rf package/luci-app-ddns-go
-          rm -rf package/lucky
-          rm -rf package/cloudflared
-          rm -rf package/luci-app-mosdns
-          rm -rf package/luci-app-alist
-          rm -rf package/openwrt-adguardhome/
-          rm -rf package/z_*
-          rm -rf package/mycustom/openwrt-upx
+          rm -rf dl/go-mod-cache/ || true
+          rm -rf /workdir/dl/go-mod-cache/ || true
+          rm -rf files || true
+          rm -rf .config || true
+          rm -rf  bin/targets/mediatek/mt7986/*.bin || true
+          rm -rf package/mosdns || true
+          rm -rf package/v2ray-geodata || true
+          rm -rf package/luci-app-ddns-go || true
+          rm -rf package/lucky || true
+          rm -rf package/cloudflared || true
+          rm -rf package/luci-app-mosdns || true
+          rm -rf package/luci-app-alist || true
+          rm -rf package/openwrt-adguardhome/ || true
+          rm -rf package/z_* || true
+          rm -rf package/mycustom/openwrt-upx || true
           git checkout package || true
 ##########################################################################
 
