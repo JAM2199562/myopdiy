@@ -14,16 +14,16 @@
 # git clone https://github.com/sbwml/luci-app-alist.git package/z_luci-app-alist
 
 # 增加adguard
-git clone https://github.com/kiddin9/openwrt-adguardhome.git package/z_openwrt-adguardhome
+# git clone https://github.com/kiddin9/openwrt-adguardhome.git package/z_openwrt-adguardhome
 
 # 增加luci-app-ddns-go
-git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
+# git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
 
 # 增加luci-app-lucky
 git clone https://github.com/gdy666/luci-app-lucky.git package/z_luci-app-lucky
 
 
-# 增加cloudflare 测速
-git clone https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest.git package/z_luci-app-cloudflarespeedtest
-git clone https://github.com/immortalwrt-collections/openwrt-cdnspeedtest.git package/z_openwrt-cdnspeedtest
-chmod a+x package/z_luci-app-cloudflarespeedtest/applications/luci-app-cloudflarespeedtest/root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh
+# # 增加cloudflare 测速
+# git clone https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest.git package/z_luci-app-cloudflarespeedtest
+# git clone https://github.com/immortalwrt-collections/openwrt-cdnspeedtest.git package/z_openwrt-cdnspeedtest
+# chmod a+x package/z_luci-app-cloudflarespeedtest/applications/luci-app-cloudflarespeedtest/root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh
