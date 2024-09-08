@@ -103,9 +103,9 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    # - name: 自定义go路径
-    #   run: |
-    #     [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.20.8.linux-amd64.tar.gz | tar -zxC /workdir/ || true
+    - name: 自定义go路径
+      run: |
+        [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.23.1.linux-amd64.tar.gz | tar -zxC /workdir/ || true
 
     - name: 下载固件源码
       working-directory: /workdir
@@ -185,12 +185,12 @@ jobs:
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
-    - name: 更换go的版本
-      if: (!cancelled())
-      run: |
-        cd openwrt
-        rm -rf feeds/packages/lang/golang
-        git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
+    # - name: 更换go的版本
+    #   if: (!cancelled())
+    #   run: |
+    #     cd openwrt
+    #     rm -rf feeds/packages/lang/golang
+    #     git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
 
     - name: 引入luci-passwall2
       run: |
