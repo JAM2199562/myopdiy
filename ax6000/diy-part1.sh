@@ -13,10 +13,6 @@
 # ls -al feeds/packages/lang/golang
 # git clone https://github.com/sbwml/luci-app-alist.git package/z_luci-app-alist
 
-# 增加luci-app-mosdns(2023.10.5 简化mosdns，不再使用4.5.3版本)
-rm -rf ./feeds/packages/net/mosdns
-git clone https://github.com/sbwml/luci-app-mosdns.git package/z_luci-app-mosdns
-
 # 增加adguard
 git clone https://github.com/kiddin9/openwrt-adguardhome.git package/z_openwrt-adguardhome
 

@@ -5,6 +5,17 @@
 
 
 # 针对特别软件的自定义设置
+## 编译安装mosdns
+rm -rf feeds/packages/lang/golang/
+git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
+rm -rf package/mosdns/
+rm -f package/feeds/packages/mosdns
+git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
+
+# 增加luci-app-mosdns(2023.10.5 简化mosdns，不再使用4.5.3版本)
+rm -rf ./feeds/packages/net/mosdns
+git clone https://github.com/sbwml/luci-app-mosdns.git package/z_luci-app-mosdns
+
 ## 避免alist依赖的go在feeds操作时被覆盖掉
 # rm -rf feeds/packages/lang/golang
 # git clone https://github.com/sbwml/packages_lang_golang -b 20.x feeds/packages/lang/golang
