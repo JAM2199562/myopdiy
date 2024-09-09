@@ -103,9 +103,38 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    # - name: 自定义go路径
-    #   run: |
-    #     [ ! -e /workdir/go ]  && wget -qO- https://go.dev/dl/go1.23.1.linux-amd64.tar.gz | tar -zxC /workdir/ || true
+    - name: 检查架构、检查Go版本并下载Go
+      run: |
+        arch=$(uname -m)
+        echo "检测到的架构: $arch"
+        
+        # 检查是否已安装Go及其版本
+        if [ -x /usr/local/go/bin/go ]; then
+          go_version=$(/usr/local/go/bin/go version | awk '{print $3}' | sed 's/go//')
+          echo "已检测到的Go版本: $go_version"
+        else
+          go_version="0"
+          echo "未检测到已安装的Go版本"
+        fi
+
+        # 比较版本号，检查是否需要下载新版本
+        required_version="1.23"
+        if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$required_version" ] && [ "$go_version" != "0" ]; then
+          echo "已安装的Go版本满足要求，无需下载"
+        else
+          if [ "$arch" = "aarch64" ]; then
+            # 为ARM64下载Go
+            echo "正在为arm64下载Go..."
+            wget -c https://go.dev/dl/go1.23.1.linux-arm64.tar.gz -O - | sudo tar -xz -C /usr/local
+          elif [ "$arch" = "x86_64" ]; then
+            # 为x86_64下载Go
+            echo "正在为x86_64下载Go..."
+            wget -c https://go.dev/dl/go1.23.1.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
+          else
+            echo "不支持的架构: $arch"
+            exit 1
+          fi
+        fi
 
     - name: 下载固件源码
       working-directory: /workdir
@@ -149,6 +178,7 @@ jobs:
         cd $GITHUB_WORKSPACE
         [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
         cd openwrt
+        echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
         cat .config
         make defconfig
 
