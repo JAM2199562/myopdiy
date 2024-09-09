@@ -119,7 +119,7 @@ jobs:
         # 比较完整的版本号，检查是否需要下载新版本
         required_version="$GO_VERSION"
         if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$go_version" ] && [ "$go_version" != "0" ]; then
-          echo "已安装的Go版本满足要求，无需下载"
+          echo "已安装的Go版本满足要求,无需下载"
         else
           if [ "$arch" = "aarch64" ]; then
             # 为ARM64下载Go
@@ -158,7 +158,6 @@ jobs:
 
     - name: 自定义源代码和包(DIY_P1)
       run: |
-        ln -sf /workdir/${{env.SOURCE_ROOT}} $GITHUB_WORKSPACE/openwrt
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
@@ -175,11 +174,13 @@ jobs:
         echo "当前路径是: $(pwd)"
         chmod +x $DIY_P2_SH
         $GITHUB_WORKSPACE/$DIY_P2_SH
+
     - name: 针对特定软件的自定义设置(DIY_P3)
       run: |
         chmod +x $DIY_P3_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P3_SH
+
     - name: 生成编译配置
       run: |
         cd openwrt
