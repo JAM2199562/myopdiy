@@ -125,11 +125,11 @@ jobs:
           if [ "$arch" = "aarch64" ]; then
             # 为ARM64下载Go
             echo "正在为arm64下载Go..."
-            wget -c https://go.dev/dl/go1.23.1.linux-arm64.tar.gz -O - | sudo tar -xz -C /usr/local
+            wget -c https://go.dev/dl/go1.22.1.linux-arm64.tar.gz -O - | sudo tar -xz -C /usr/local
           elif [ "$arch" = "x86_64" ]; then
             # 为x86_64下载Go
             echo "正在为x86_64下载Go..."
-            wget -c https://go.dev/dl/go1.23.1.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
+            wget -c https://go.dev/dl/go1.22.1.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
           else
             echo "不支持的架构: $arch"
             exit 1
@@ -215,12 +215,12 @@ jobs:
     #     echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
     #     echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
-    # - name: 更换go的版本
-    #   if: (!cancelled())
-    #   run: |
-    #     cd openwrt
-    #     rm -rf feeds/packages/lang/golang
-    #     git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
+    - name: 更换go的版本
+      if: (!cancelled())
+      run: |
+        cd openwrt
+        rm -rf feeds/packages/lang/golang
+        git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
 
     - name: 引入luci-passwall2
       run: |
