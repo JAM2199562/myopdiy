@@ -214,23 +214,7 @@ jobs:
         echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
-    - name: 更换go的版本
-      if: (!cancelled())
-      run: |
-        cd openwrt
-        rm -rf feeds/packages/lang/golang
-        git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
 
-    - name: 引入luci-passwall2
-      run: |
-        cd openwrt
-        echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> "feeds.conf.default"
-        echo "src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git;main" >> "feeds.conf.default"
-        ./scripts/feeds update -a && ./scripts/feeds install -a
-        cd $GITHUB_WORKSPACE
-        [ -e $CONFIG_FILE ] && cat $CONFIG_FILE >> $GITHUB_WORKSPACE/openwrt/.config
-        cd openwrt
-        make defconfig
 
     # - name: 再次编译固件
     #   id: compile-2
