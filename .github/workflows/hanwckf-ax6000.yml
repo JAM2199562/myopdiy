@@ -116,9 +116,9 @@ jobs:
           go_version="0"
           echo "未检测到已安装的Go版本"
         fi
-        # 比较版本号，检查是否需要下载新版本
-        required_version="${GO_VERSION%.*}"  # 提取主版本号，删除小版本号部分
-        if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$required_version" ] && [ "$go_version" != "0" ]; then
+        # 比较完整的版本号，检查是否需要下载新版本
+        required_version="$GO_VERSION"
+        if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$go_version" ] && [ "$go_version" != "0" ]; then
           echo "已安装的Go版本满足要求，无需下载"
         else
           if [ "$arch" = "aarch64" ]; then
