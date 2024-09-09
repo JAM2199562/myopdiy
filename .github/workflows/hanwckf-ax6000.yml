@@ -90,18 +90,18 @@ jobs:
       with:
         ref: hanwckf
 
-    - name: 安装编译环境
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004) || true
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
-        sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
+    # - name: 安装编译环境
+    #   env:
+    #     DEBIAN_FRONTEND: noninteractive
+    #   run: |
+    #     sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+    #     sudo -E apt-get -qq update
+    #     sudo -E apt-get -qq install $(curl -fsSL https://tinyurl.com/depends-ubuntu-2004) || true
+    #     sudo -E apt-get -qq autoremove --purge
+    #     sudo -E apt-get -qq clean
+    #     sudo timedatectl set-timezone "$TZ"
+    #     sudo mkdir -p /workdir
+    #     sudo chown $USER:$GROUPS /workdir
 
     - name: 检查架构、检查Go版本并下载Go
       run: |
@@ -118,7 +118,7 @@ jobs:
         fi
 
         # 比较版本号，检查是否需要下载新版本
-        required_version="1.23"
+        required_version="1.22"
         if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$required_version" ] && [ "$go_version" != "0" ]; then
           echo "已安装的Go版本满足要求，无需下载"
         else
