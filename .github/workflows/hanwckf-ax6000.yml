@@ -39,6 +39,7 @@ env:
   TZ: Asia/Shanghai
   NEED_CLEANUP: true
   NEED_CLONE: true
+  GO_VERSION: "1.22.6"
 
 jobs:
   build:
@@ -107,7 +108,6 @@ jobs:
       run: |
         arch=$(uname -m)
         echo "检测到的架构: $arch"
-        
         # 检查是否已安装Go及其版本
         if [ -x /usr/local/go/bin/go ]; then
           go_version=$(/usr/local/go/bin/go version | awk '{print $3}' | sed 's/go//')
@@ -116,20 +116,19 @@ jobs:
           go_version="0"
           echo "未检测到已安装的Go版本"
         fi
-
         # 比较版本号，检查是否需要下载新版本
-        required_version="1.22"
+        required_version="${GO_VERSION%.*}"  # 提取主版本号，删除小版本号部分
         if [ "$(printf '%s\n' "$required_version" "$go_version" | sort -V | head -n1)" = "$required_version" ] && [ "$go_version" != "0" ]; then
           echo "已安装的Go版本满足要求，无需下载"
         else
           if [ "$arch" = "aarch64" ]; then
             # 为ARM64下载Go
             echo "正在为arm64下载Go..."
-            wget -c https://go.dev/dl/go1.22.1.linux-arm64.tar.gz -O - | sudo tar -xz -C /usr/local
+            wget -c https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz -O - | sudo tar -xz -C /usr/local
           elif [ "$arch" = "x86_64" ]; then
             # 为x86_64下载Go
             echo "正在为x86_64下载Go..."
-            wget -c https://go.dev/dl/go1.22.1.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
+            wget -c https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
           else
             echo "不支持的架构: $arch"
             exit 1
@@ -204,16 +203,16 @@ jobs:
       uses: P3TERX/ssh2actions@v1.0.0
       if: false
 
-    # - name: 开始编译固件
-    #   id: compile-1
-    #   run: |
-    #     cd openwrt
-    #     echo -e "$(nproc) thread compile" && make -j$(nproc) || \
-    #     echo -e "2 thread compile " && make -j2 || \
-    #     echo -e "1 thread compile " && make -j1 V=s
-    #     echo "{compile_status}={success}" >> $GITHUB_OUTPUT
-    #     echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-    #     echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+    - name: 开始编译固件
+      id: compile-1
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile" && make -j$(nproc) || \
+        echo -e "2 thread compile " && make -j2 || \
+        echo -e "1 thread compile " && make -j1 V=s
+        echo "{compile_status}={success}" >> $GITHUB_OUTPUT
+        echo "FILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
 
     - name: 更换go的版本
       if: (!cancelled())
