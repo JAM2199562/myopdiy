@@ -18,6 +18,9 @@
 
 # 增加luci-app-ddns-go
 # git clone https://github.com/sirpdboy/luci-app-ddns-go package/z_luci-app-ddns-go
+# 替换go的版本
+rm -rf feeds/packages/lang/golang/
+git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
 
 # 增加luci-app-lucky
 git clone https://github.com/gdy666/luci-app-lucky.git package/z_luci-app-lucky
