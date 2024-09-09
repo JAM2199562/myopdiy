@@ -4,6 +4,12 @@
 #============================================================
 
 
+
+# 源上的版本比较低，手动替换到2024.8.3
+echo '替换cloudflared版本到2024.8.3'
+sed -i 's/^PKG_VERSION:=.*/PKG_VERSION:=2024.8.3/' package/feeds/packages/cloudflared/Makefile
+sed -i 's/^PKG_HASH:=.*/PKG_HASH:=dd5c0a417020e16a916c87c0f0cff1aca51b0935ddbafdd093fc029fdc67751d/' package/feeds/packages/cloudflared/Makefile
+
 # 针对特别软件的自定义设置
 ## 编译安装mosdns
 # # # rm -rf feeds/packages/lang/golang/
