@@ -175,7 +175,11 @@ jobs:
         echo "当前路径是: $(pwd)"
         chmod +x $DIY_P2_SH
         $GITHUB_WORKSPACE/$DIY_P2_SH
-
+    - name: 针对特定软件的自定义设置(DIY_P3)
+      run: |
+        chmod +x $DIY_P3_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P3_SH
     - name: 生成编译配置
       run: |
         cd openwrt
@@ -186,12 +190,6 @@ jobs:
         echo 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="/usr/local/go"' >> .config
         cat .config
         make defconfig
-
-        - name: 针对特定软件的自定义设置(DIY_P3)
-        run: |
-          chmod +x $DIY_P3_SH
-          cd openwrt
-          $GITHUB_WORKSPACE/$DIY_P3_SH
 
     - name: 下载软件包
       id: package
