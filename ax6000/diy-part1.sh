@@ -23,9 +23,7 @@ echo "------------------: $PWD"
 # 增加luci-app-lucky
 git clone https://github.com/gdy666/luci-app-lucky.git package/z_luci-app-lucky
 
-# 更换go版本
-rm -rf feeds/packages/lang/golang
-git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
+
 # 增加luci-app-passwall2
 echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> "feeds.conf.default"
 echo "src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git;main" >> "feeds.conf.default"

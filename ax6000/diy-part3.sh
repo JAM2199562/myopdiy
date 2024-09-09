@@ -9,7 +9,9 @@
 echo '替换cloudflared版本到2024.8.3'
 sed -i 's/^PKG_VERSION:=.*/PKG_VERSION:=2024.8.3/' package/feeds/packages/cloudflared/Makefile
 sed -i 's/^PKG_HASH:=.*/PKG_HASH:=dd5c0a417020e16a916c87c0f0cff1aca51b0935ddbafdd093fc029fdc67751d/' package/feeds/packages/cloudflared/Makefile
-
+# 更换go版本
+rm -rf feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
 # 针对特别软件的自定义设置
 ## 编译安装mosdns
 # # # rm -rf feeds/packages/lang/golang/
